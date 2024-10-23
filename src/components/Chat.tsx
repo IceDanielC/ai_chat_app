@@ -93,27 +93,29 @@ export const Chat: React.FC = () => {
           className="w-3/5"
           onChange={(e) => setPrompt(e.target.value)}
         ></Textarea>
-        <Select
-          size="xs"
-          w={"8rem"}
-          value={selectedModel}
-          onChange={(value) => setSelectedModel(value!)}
-          data={[
-            { value: "gpt-3.5-turbo", label: "gpt-3.5-turbo" },
-            { value: "gpt-4o", label: "gpt-4o" },
-            { value: "gpt-4", label: "gpt-4" },
-            { value: "gpt-4o-mini", label: "gpt-4o-mini" },
-          ]}
-        />
-        <Button
-          className="self-end relative left-[-8rem]"
-          leftIcon={<IconExternalLink />}
-          loading={loading}
-          onClick={() => getGptResponse(prompt)}
-          disabled={prompt.length === 0 && !loading}
-        >
-          Send
-        </Button>
+        <div>
+          <Select
+            size="xs"
+            w={"150px"}
+            value={selectedModel}
+            onChange={(value) => setSelectedModel(value!)}
+            data={[
+              { value: "gpt-3.5-turbo", label: "gpt-3.5-turbo" },
+              { value: "gpt-4o", label: "gpt-4o" },
+              { value: "gpt-4", label: "gpt-4" },
+              { value: "gpt-4o-mini", label: "gpt-4o-mini" },
+            ]}
+          />
+          <Button
+            className="self-end"
+            leftIcon={<IconExternalLink />}
+            loading={loading}
+            onClick={() => getGptResponse(prompt)}
+            disabled={prompt.length === 0 && !loading}
+          >
+            Send
+          </Button>
+        </div>
       </div>
     </div>
   );
