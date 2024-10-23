@@ -5,10 +5,10 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { prompt, history = [], options = {} } = req.body;
+  const { prompt, history = [], options = {}, model } = req.body;
 
   const data = {
-    model: "gpt-3.5-turbo",
+    model,
     messages: [
       {
         role: "system",

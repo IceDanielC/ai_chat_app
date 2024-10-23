@@ -17,6 +17,7 @@ export type CompletionProps = {
         logit_bias?: Record<string, number>;
         user?: string;
     };
+    model: string
 }
 
 export type ChatLogsStoragetype = {

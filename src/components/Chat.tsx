@@ -1,5 +1,5 @@
 import { getCompletions } from "@/utils/getCompletions";
-import { Button, Textarea } from "@mantine/core";
+import { Button, Textarea, Select } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { IconExternalLink } from "@tabler/icons-react";
 import clsx from "clsx";
@@ -14,6 +14,9 @@ export const Chat: React.FC = () => {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [historyList, setHistoryList] = useState<ChatLogType[]>([]);
+
+  // 模型选择
+  const [selectedModel, setSelectedModel] = useState("gpt-4o");
 
   useEffect(() => {
     const getChatList = getChatLogs(TMP_SESSION_CHAT);
@@ -33,7 +36,11 @@ export const Chat: React.FC = () => {
     setChatListPersist(list);
     // 清空输入框
     setPrompt("");
-    const response = await getCompletions({ prompt, history: historyList });
+    const response = await getCompletions({
+      prompt,
+      history: historyList,
+      model: selectedModel,
+    });
     setLoading(false);
     // 保存历史记录上下文(gpt)
     setChatListPersist([
@@ -86,8 +93,20 @@ export const Chat: React.FC = () => {
           className="w-3/5"
           onChange={(e) => setPrompt(e.target.value)}
         ></Textarea>
+        <Select
+          size="xs"
+          w={"150px"}
+          value={selectedModel}
+          onChange={(value) => setSelectedModel(value!)}
+          data={[
+            { value: "gpt-3.5-turbo", label: "gpt-3.5-turbo" },
+            { value: "gpt-4o", label: "gpt-4o" },
+            { value: "gpt-4", label: "gpt-4" },
+            { value: "gpt-4o-mini", label: "gpt-4o-mini" },
+          ]}
+        />
         <Button
-          className="self-end"
+          className="self-end relative left-[-150px]"
           leftIcon={<IconExternalLink />}
           loading={loading}
           onClick={() => getGptResponse(prompt)}
