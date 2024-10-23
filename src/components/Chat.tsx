@@ -95,7 +95,7 @@ export const Chat: React.FC = () => {
         ></Textarea>
         <Select
           size="xs"
-          w={"150px"}
+          w={"8rem"}
           value={selectedModel}
           onChange={(value) => setSelectedModel(value!)}
           data={[
@@ -106,7 +106,7 @@ export const Chat: React.FC = () => {
           ]}
         />
         <Button
-          className="self-end relative left-[-150px]"
+          className="self-end relative left-[-8rem]"
           leftIcon={<IconExternalLink />}
           loading={loading}
           onClick={() => getGptResponse(prompt)}
