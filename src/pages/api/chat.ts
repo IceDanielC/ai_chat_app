@@ -25,7 +25,8 @@ export default async function handler(
   };
 
   const response = await fetch(
-    "https://api.gptgod.online/v1/chat/completions",
+    // "https://api.gptgod.online/v1/chat/completions",
+    "https://api.openai.com/v1/chat/completions",
     {
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,

@@ -60,7 +60,7 @@ export const Chat: React.FC = () => {
                 alt=""
                 width={50}
                 height={100}
-                className="rounded-full "
+                className="rounded-full"
               />
             </div>
             <div
@@ -71,7 +71,7 @@ export const Chat: React.FC = () => {
                   relative: history.role === "user",
                   "left-[100%]": history.role === "user",
                   "transform translate-x-[-100%]": history.role === "user",
-                }) + " px-4 py-3 rounded-lg my-4 table"
+                }) + " px-4 py-3 rounded-lg my-4 table shrink-[20]"
               }
             >
               <div>{history.content}</div>
