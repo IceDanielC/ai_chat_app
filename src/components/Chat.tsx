@@ -10,7 +10,7 @@ import styles from "./Chat.module.scss";
 import { ChatLogType } from "@/utils/types";
 import { getChatLogs, updateChatLogs } from "@/utils/chatStorage";
 import { getGeneratedImage } from "@/utils/getGeneratedImage";
-import { googleSearch } from "@/utils/google";
+import { googleSearch, online_prompt } from "@/utils/google";
 
 const TMP_SESSION_CHAT = "chat_01";
 
@@ -48,16 +48,7 @@ export const Chat: React.FC = () => {
     if (isOnline) {
       // 若开启联网，调用google搜索
       const searchRes = await googleSearch(prompt);
-      enhancedPrompt = `
-        您现在是一个具备联网功能的智能助手。我将提供一段来自互联网的文本信息。请根据这段文本以及用户提出的问题来给出回答。如果网络资料中的信息不足以回答用户的问题，请回复说无法提供确切的答案。
-        网络资料:
-        ------------------------------------------
-        ${searchRes}
-        -------------------------------------------
-        用户问题:
-        --------------------------------------------
-        ${prompt}
-        ---------------------------------------------`;
+      enhancedPrompt = online_prompt(searchRes, prompt);
     }
 
     let response = null;

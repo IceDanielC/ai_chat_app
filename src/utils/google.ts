@@ -1,3 +1,21 @@
+export const online_prompt = (searchRes: string, userPrompt: string) => {
+  return `
+        You are now an intelligent assistant with networking capabilities. 
+        I will provide a text message from the Internet. 
+        Please give an answer based on this text and the question posed by the user. 
+        If the information in the Internet material is not sufficient to answer the user's question, 
+        please reply that you are unable to provide a definitive answer.
+        
+        Infomation from the Internet:
+        ------------------------------------------
+        ${searchRes}
+        -------------------------------------------
+        user question:
+        --------------------------------------------
+        ${userPrompt}
+        ---------------------------------------------`
+}
+
 export const googleSearch = async (searchKey: string) => {
   const googleSearchKey = "AIzaSyAI_9SWpOk8vt2TnQjVSHzwMxDHrRgd3fc";
   const googleCxId = "73f004d0b3ac04d0c";
