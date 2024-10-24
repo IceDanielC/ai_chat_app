@@ -1,14 +1,16 @@
 import { getCompletions } from "@/utils/getCompletions";
-import { Button, Textarea, Select } from "@mantine/core";
+import { Button, Textarea, Select, Switch } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { IconExternalLink } from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
 import { message } from "antd";
 
+import styles from "./Chat.module.scss";
 import { ChatLogType } from "@/utils/types";
 import { getChatLogs, updateChatLogs } from "@/utils/chatStorage";
 import { getGeneratedImage } from "@/utils/getGeneratedImage";
+import { googleSearch } from "@/utils/google";
 
 const TMP_SESSION_CHAT = "chat_01";
 
@@ -20,6 +22,8 @@ export const Chat: React.FC = () => {
 
   // 模型选择
   const [selectedModel, setSelectedModel] = useState("gpt-4o");
+  // 联网设置
+  const [isOnline, setIsOnline] = useState(false);
 
   useEffect(() => {
     const getChatList = getChatLogs(TMP_SESSION_CHAT);
@@ -39,10 +43,27 @@ export const Chat: React.FC = () => {
     setChatListPersist(list);
     // 清空输入框
     setPrompt("");
+    // 若开启联网
+    let enhancedPrompt = "";
+    if (isOnline) {
+      // 若开启联网，调用google搜索
+      const searchRes = await googleSearch(prompt);
+      enhancedPrompt = `
+        您现在是一个具备联网功能的智能助手。我将提供一段来自互联网的文本信息。请根据这段文本以及用户提出的问题来给出回答。如果网络资料中的信息不足以回答用户的问题，请回复说无法提供确切的答案。
+        网络资料:
+        ------------------------------------------
+        ${searchRes}
+        -------------------------------------------
+        用户问题:
+        --------------------------------------------
+        ${prompt}
+        ---------------------------------------------`;
+    }
+
     let response = null;
     try {
       response = await getCompletions({
-        prompt,
+        prompt: isOnline ? enhancedPrompt : prompt,
         history: historyList,
         model: selectedModel,
       });
@@ -137,10 +158,30 @@ export const Chat: React.FC = () => {
         <Textarea
           value={prompt}
           placeholder="Enter your Content Here..."
-          className="w-3/5"
+          className={styles["chat-input"]}
           onChange={(e) => setPrompt(e.target.value)}
-        ></Textarea>
+          styles={() => ({
+            input: {
+              height: "90px",
+            },
+          })}
+        />
         <div>
+          <Switch
+            className="my-1 ml-1"
+            labelPosition="left"
+            label="开启联网"
+            size="xs"
+            checked={isOnline}
+            onChange={(value) => {
+              setIsOnline(value.target.checked);
+              if (value.target.checked) {
+                messageApi.success("联网已开启");
+              } else {
+                messageApi.info("联网已关闭");
+              }
+            }}
+          />
           <Select
             size="xs"
             w={"150px"}
