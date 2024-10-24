@@ -14,16 +14,33 @@ export default async function handler(
     size,
   };
 
-  const response = await fetch("https://api.openai.com/v1/images/generations", {
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-    body: JSON.stringify(data),
-  });
+  try {
+    const response = await fetch(
+      "https://api.openai.com/v1/images/generations",
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
 
-  const json = await response.json();
+    const json = await response.json();
 
-  res.status(200).json(json);
+    // 返回200的openai的错误处理
+    if(json.error) {
+        console.error('error', json.error);
+        res.status(500).json(json)
+        return
+    }
+    
+    res.status(200).json(json);
+  } catch (error) {
+    // 网络链接失败、token超额等问题
+    res.status(500).json({
+      error,
+    });
+  }
 }

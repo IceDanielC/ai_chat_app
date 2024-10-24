@@ -15,7 +15,7 @@ export const getCompletions = async (params: CompletionProps): Promise<GptRespon
         body: JSON.stringify(params)
     })
     if(!resp.ok) {
-        throw new Error("Failed to fetch completions "+ resp.statusText)
+        throw new Error("Failed to fetch completions " + resp.statusText)
     }
     return resp.json()
 }

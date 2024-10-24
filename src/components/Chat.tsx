@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { IconExternalLink } from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
+import { message } from "antd";
 
 import { ChatLogType } from "@/utils/types";
 import { getChatLogs, updateChatLogs } from "@/utils/chatStorage";
@@ -15,6 +16,7 @@ export const Chat: React.FC = () => {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [historyList, setHistoryList] = useState<ChatLogType[]>([]);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // 模型选择
   const [selectedModel, setSelectedModel] = useState("gpt-4o");
@@ -37,11 +39,21 @@ export const Chat: React.FC = () => {
     setChatListPersist(list);
     // 清空输入框
     setPrompt("");
-    const response = await getCompletions({
-      prompt,
-      history: historyList,
-      model: selectedModel,
-    });
+    let response = null;
+    try {
+      response = await getCompletions({
+        prompt,
+        history: historyList,
+        model: selectedModel,
+      });
+    } catch (error) {
+      //若出现异常回退
+      messageApi.error(error + "");
+      setLoading(false);
+      list.pop();
+      setChatListPersist(list);
+      return;
+    }
     setLoading(false);
     // 保存历史记录上下文(gpt)
     setChatListPersist([
@@ -59,10 +71,20 @@ export const Chat: React.FC = () => {
     // 保存历史记录上下文(user)
     const list = [...historyList, { role: "user", content: prompt }];
     setChatListPersist(list);
-    const image = await getGeneratedImage({
-      prompt,
-      model: selectedModel,
-    });
+    let image = null;
+    try {
+      image = await getGeneratedImage({
+        prompt,
+        model: selectedModel,
+      });
+    } catch (error) {
+      // 若出现异常回退
+      messageApi.error(error + "");
+      setLoading(false);
+      list.pop();
+      setChatListPersist(list);
+      return;
+    }
     setLoading(false);
     // 保存历史记录上下文(gpt)
     setChatListPersist([
@@ -70,10 +92,11 @@ export const Chat: React.FC = () => {
       { role: "assistant", content: image.data[0].url },
     ]);
     console.log("dall-e-3返回:", image.data[0]);
-  }
+  };
 
   return (
     <div className="h-screen flex flex-col items-center">
+      {contextHolder}
       <div className="h-[80vh] overflow-y-auto px-6 w-[80vw] bg-gray-100">
         {historyList.map((history, idx) => (
           <div key={`${history.role}-${idx}`} className="flex">
@@ -82,7 +105,7 @@ export const Chat: React.FC = () => {
                 hidden: history.role === "user",
                 "self-start": history.role !== "user",
                 "mr-2": history.role !== "user",
-                "relative": history.role !== "user",
+                relative: history.role !== "user",
                 "top-[20px]": history.role !== "user",
               })}
             >
