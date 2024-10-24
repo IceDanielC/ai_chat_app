@@ -7,6 +7,7 @@ import Image from "next/image";
 
 import { ChatLogType } from "@/utils/types";
 import { getChatLogs, updateChatLogs } from "@/utils/chatStorage";
+import { getGeneratedImage } from "@/utils/getGeneratedImage";
 
 const TMP_SESSION_CHAT = "chat_01";
 
@@ -50,6 +51,27 @@ export const Chat: React.FC = () => {
     console.log("gptAPI返回:", response);
   };
 
+  // dall-e-3 生成图片
+  const generateImage = async (prompt: string) => {
+    setLoading(true);
+    // 清空输入框
+    setPrompt("");
+    // 保存历史记录上下文(user)
+    const list = [...historyList, { role: "user", content: prompt }];
+    setChatListPersist(list);
+    const image = await getGeneratedImage({
+      prompt,
+      model: selectedModel,
+    });
+    setLoading(false);
+    // 保存历史记录上下文(gpt)
+    setChatListPersist([
+      ...list,
+      { role: "assistant", content: image.data[0].url },
+    ]);
+    console.log("dall-e-3返回:", image.data[0]);
+  }
+
   return (
     <div className="h-screen flex flex-col items-center">
       <div className="h-[80vh] overflow-y-auto px-6 w-[80vw] bg-gray-100">
@@ -58,8 +80,10 @@ export const Chat: React.FC = () => {
             <div
               className={clsx({
                 hidden: history.role === "user",
-                "self-center": history.role !== "user",
+                "self-start": history.role !== "user",
                 "mr-2": history.role !== "user",
+                "relative": history.role !== "user",
+                "top-[20px]": history.role !== "user",
               })}
             >
               <Image
@@ -104,13 +128,20 @@ export const Chat: React.FC = () => {
               { value: "gpt-4o", label: "gpt-4o" },
               { value: "gpt-4", label: "gpt-4" },
               { value: "gpt-4o-mini", label: "gpt-4o-mini" },
+              { value: "dall-e-3", label: "dall-e-3" },
             ]}
           />
           <Button
             className="self-end"
             leftIcon={<IconExternalLink />}
             loading={loading}
-            onClick={() => getGptResponse(prompt)}
+            onClick={() => {
+              if (selectedModel === "dall-e-3") {
+                generateImage(prompt);
+              } else {
+                getGptResponse(prompt);
+              }
+            }}
             disabled={prompt.length === 0 && !loading}
           >
             Send

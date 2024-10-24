@@ -23,3 +23,10 @@ export type CompletionProps = {
 export type ChatLogsStoragetype = {
     [key: string]: ChatLogType[];
 }
+
+export type ImageRequestType = {
+    model: string;
+    prompt: string;
+    size?: string;
+    n?: number;
+}
