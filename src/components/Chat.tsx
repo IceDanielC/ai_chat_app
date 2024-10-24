@@ -1,6 +1,6 @@
 import { getCompletions } from "@/utils/getCompletions";
 import { Button, Textarea, Select, Switch } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { IconExternalLink } from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
@@ -19,6 +19,7 @@ export const Chat: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [historyList, setHistoryList] = useState<ChatLogType[]>([]);
   const [messageApi, contextHolder] = message.useMessage();
+  const chatLayoutRef = useRef<HTMLDivElement>(null);
 
   // 模型选择
   const [selectedModel, setSelectedModel] = useState("gpt-4o");
@@ -29,6 +30,16 @@ export const Chat: React.FC = () => {
     const getChatList = getChatLogs(TMP_SESSION_CHAT);
     setHistoryList(getChatList);
   }, []);
+
+  // 滚动到最底部
+  useLayoutEffect(() => {
+    if (chatLayoutRef.current) {
+      chatLayoutRef.current.scrollTo({
+        top: chatLayoutRef.current.scrollHeight,
+        behavior: "smooth", // 使用平滑滚动效果
+      });
+    }
+  }, [historyList]);
 
   const setChatListPersist = (logs: ChatLogType[]) => {
     setHistoryList(logs);
@@ -109,7 +120,11 @@ export const Chat: React.FC = () => {
   return (
     <div className="h-screen flex flex-col items-center">
       {contextHolder}
-      <div className="h-[80vh] overflow-y-auto px-6 w-[80vw] bg-gray-100">
+      {/* chat展示区域 */}
+      <div
+        ref={chatLayoutRef}
+        className="h-[80vh] overflow-y-auto px-6 w-[80vw] bg-gray-100"
+      >
         {historyList.map((history, idx) => (
           <div key={`${history.role}-${idx}`} className="flex">
             <div

@@ -1,16 +1,11 @@
 export const online_prompt = (searchRes: string, userPrompt: string) => {
   return `
-        You are now an intelligent assistant with networking capabilities. 
-        I will provide a text message from the Internet. 
-        Please give an answer based on this text and the question posed by the user. 
-        If the information in the Internet material is not sufficient to answer the user's question, 
-        please reply that you are unable to provide a definitive answer.
-        
-        Infomation from the Internet:
+        您现在是一个具备联网功能的智能助手。我将提供一段来自互联网的文本信息。请根据这段文本以及用户提出的问题来给出回答。如果网络资料中的信息不足以回答用户的问题，请回复说无法提供确切的答案。
+        网络资料:
         ------------------------------------------
         ${searchRes}
         -------------------------------------------
-        user question:
+        用户问题:
         --------------------------------------------
         ${userPrompt}
         ---------------------------------------------`
