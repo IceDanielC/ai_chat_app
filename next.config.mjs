@@ -7,6 +7,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'mark-ai.oss-cn-hangzhou.aliyuncs.com',
       },
+      {
+        protocol: 'https',
+        hostname:'filesystem.site',
+      }
     ]
   }
 };

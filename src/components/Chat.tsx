@@ -1,4 +1,4 @@
-import { Button, Textarea, Select, Switch } from "@mantine/core";
+import { Button, Textarea, Select, Switch, ActionIcon } from "@mantine/core";
 import {
   useCallback,
   useEffect,
@@ -6,15 +6,15 @@ import {
   useRef,
   useState,
 } from "react";
-import { IconExternalLink } from "@tabler/icons-react";
+import { IconExternalLink, IconTrash } from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
-import { message } from "antd";
+import { message, Popconfirm } from "antd";
 
 import styles from "./Chat.module.scss";
 import { ChatLogType } from "@/utils/types";
 import chatService from "@/utils/getCompletions";
-import { getChatLogs, updateChatLogs } from "@/utils/chatStorage";
+import { clearChatLogs, getChatLogs, updateChatLogs } from "@/utils/chatStorage";
 import { getGeneratedImage } from "@/utils/getGeneratedImage";
 import { googleSearch, online_prompt } from "@/utils/google";
 
@@ -129,38 +129,41 @@ export const Chat: React.FC = () => {
   );
 
   // dall-e-3 生成图片
-  const generateImage = useCallback(async (prompt: string) => {
-    setLoading(true);
-    // 清空输入框
-    setPrompt("");
-    // 保存历史记录上下文(user)
-    const list: ChatLogType[] = [
-      ...historyList,
-      { role: "user", content: prompt },
-    ];
-    setChatListPersist(list);
-    let image = null;
-    try {
-      image = await getGeneratedImage({
-        prompt,
-        model: selectedModel,
-      });
-    } catch (error) {
-      // 若出现异常回退
-      messageApi.error(error + "");
-      setLoading(false);
-      list.pop();
+  const generateImage = useCallback(
+    async (prompt: string) => {
+      setLoading(true);
+      // 清空输入框
+      setPrompt("");
+      // 保存历史记录上下文(user)
+      const list: ChatLogType[] = [
+        ...historyList,
+        { role: "user", content: prompt },
+      ];
       setChatListPersist(list);
-      return;
-    }
-    setLoading(false);
-    // 保存历史记录上下文(gpt)
-    setChatListPersist([
-      ...list,
-      { role: "assistant", content: image.data[0].url },
-    ]);
-    console.log("dall-e-3返回:", image.data[0]);
-  }, [historyList, messageApi, selectedModel, setChatListPersist]);
+      let image = null;
+      try {
+        image = await getGeneratedImage({
+          prompt,
+          model: selectedModel,
+        });
+      } catch (error) {
+        // 若出现异常回退
+        messageApi.error(error + "");
+        setLoading(false);
+        list.pop();
+        setChatListPersist(list);
+        return;
+      }
+      setLoading(false);
+      // 保存历史记录上下文(gpt)
+      setChatListPersist([
+        ...list,
+        { role: "assistant", content: image.data[0].url },
+      ]);
+      console.log("dall-e-3返回:", image.data[0]);
+    },
+    [historyList, messageApi, selectedModel, setChatListPersist]
+  );
 
   return (
     <div className="h-screen flex flex-col items-center">
@@ -170,6 +173,17 @@ export const Chat: React.FC = () => {
         ref={chatLayoutRef}
         className="h-[80vh] overflow-y-auto px-6 w-[80vw] bg-gray-100"
       >
+        {historyList.length === 0 && (
+          // 兜底图
+          <div className="flex justify-center">
+            <Image
+              src="https://filesystem.site/cdn/20241026/luuxr5crhMJwwJzIIhkKGeoPFZPuG8.webp"
+              alt=""
+              width={1200}
+              height={0}
+            />
+          </div>
+        )}
         {historyList.map((history, idx) => (
           <div key={`${history.role}-${idx}`} className="flex">
             <div
@@ -246,21 +260,43 @@ export const Chat: React.FC = () => {
               { value: "dall-e-3", label: "dall-e-3" },
             ]}
           />
-          <Button
-            className="self-end"
-            leftIcon={<IconExternalLink />}
-            loading={loading}
-            onClick={() => {
-              if (selectedModel === "dall-e-3") {
-                generateImage(prompt);
-              } else {
-                getGptResponse(prompt);
-              }
-            }}
-            disabled={prompt.length === 0 && !loading}
-          >
-            Send
-          </Button>
+          <div className="flex">
+            <Button
+              className="self-end"
+              leftIcon={<IconExternalLink />}
+              loading={loading}
+              onClick={() => {
+                if (selectedModel === "dall-e-3") {
+                  generateImage(prompt);
+                } else {
+                  getGptResponse(prompt);
+                }
+              }}
+              disabled={prompt.length === 0 && !loading}
+            >
+              Send
+            </Button>
+            <Popconfirm
+              title="清除全部上下文记录"
+              description="你确定要清除全部上下文记录吗?"
+              onConfirm={() => {
+                clearChatLogs(TMP_SESSION_CHAT)
+                messageApi.success("清除成功");
+                // 刷新页面
+                window.location.reload();
+              }}
+              okText="Yes"
+              cancelText="No"
+            >
+              <ActionIcon
+                className="self-center ml-1"
+                color="red"
+                variant="outline"
+              >
+                <IconTrash size="1.125rem" />
+              </ActionIcon>
+            </Popconfirm>
+          </div>
         </div>
       </div>
     </div>

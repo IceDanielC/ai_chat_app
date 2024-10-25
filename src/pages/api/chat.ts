@@ -39,12 +39,16 @@ const requestCompletionStream = async (payload: StreamPayload) => {
       body: JSON.stringify(payload),
     });
 
+    if(response.status !== 200) {
+        return response.status + ": " + response.statusText
+    }
+
     return handleStream(response);
   } catch (error: any) {
     // 网络、token超额等问题
-    console.log('err: ', error);
-    return error.cause
-  }
+    console.log("err: ", error);
+    return error.cause;
+  } 
 };
 
 const handleStream = (response: Response, counter: number = 0) => {
