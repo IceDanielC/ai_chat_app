@@ -8,19 +8,27 @@ export const online_prompt = (searchRes: string, userPrompt: string) => {
         用户问题:
         --------------------------------------------
         ${userPrompt}
-        ---------------------------------------------`
-}
+        ---------------------------------------------`;
+};
 
 export const googleSearch = async (searchKey: string) => {
   const googleSearchKey = "AIzaSyAI_9SWpOk8vt2TnQjVSHzwMxDHrRgd3fc";
   const googleCxId = "73f004d0b3ac04d0c";
-  const baseurl = "https://www.googleapis.com/customsearch/v1";
+  
   try {
-    const response = await fetch(
-      `${baseurl}?key=${googleSearchKey}&cx=${googleCxId}&q=${searchKey}&c2coff=1&start=1&end=10&dateRestrict=m[1]`
-    );
+    // 用Next.js做一层代理，避免国内的网络访问被限制
+    const response = await fetch("/api/google_search", {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify({ googleSearchKey, googleCxId, searchKey }),
+    });
     const data = await response.json();
-    return data.items.map((item: { snippet: string; }) => item.snippet).join("\n"); // 返回搜索结果
+    
+    return data.items
+      .map((item: { snippet: string }) => item.snippet)
+      .join("\n"); // 返回搜索结果
   } catch (error) {
     console.error("搜索错误:", error);
     return "搜索结果出现异常，请忽略";

@@ -1,5 +1,5 @@
 export type ChatLogType = {
-    role: string;
+    role: "user" | "assistant" | "system"; 
     content: string;
 }
 
@@ -29,4 +29,18 @@ export type ImageRequestType = {
     prompt: string;
     size?: string;
     n?: number;
+}
+
+export type StreamPayload = {
+    model: string;
+    messages: ChatLogType[];
+    stream?: boolean;
+    temperature?: number;
+    top_p?: number;
+    stop?: string | string[];
+    max_tokens?: number;
+    presence_penalty?: number;
+    frequency_penalty?: number;
+    logit_bias?: Record<string, number>;
+    user?: string;
 }

@@ -1,6 +1,11 @@
-import { getCompletions } from "@/utils/getCompletions";
 import { Button, Textarea, Select, Switch } from "@mantine/core";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { IconExternalLink } from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
@@ -8,6 +13,7 @@ import { message } from "antd";
 
 import styles from "./Chat.module.scss";
 import { ChatLogType } from "@/utils/types";
+import chatService from "@/utils/getCompletions";
 import { getChatLogs, updateChatLogs } from "@/utils/chatStorage";
 import { getGeneratedImage } from "@/utils/getGeneratedImage";
 import { googleSearch, online_prompt } from "@/utils/google";
@@ -26,6 +32,50 @@ export const Chat: React.FC = () => {
   // 联网设置
   const [isOnline, setIsOnline] = useState(false);
 
+  const setChatListPersist = useCallback((logs: ChatLogType[]) => {
+    setHistoryList(logs);
+    // 持久化
+    updateChatLogs(TMP_SESSION_CHAT, logs);
+  }, []);
+
+  const setSuggestion = useCallback(
+    (suggestion: string) => {
+      const len = historyList.length;
+      const lastMessage = len ? historyList[len - 1] : null;
+      let newList: ChatLogType[] = [];
+      if (lastMessage?.role === "assistant") {
+        historyList.pop();
+        newList = [
+          ...historyList,
+          {
+            ...lastMessage,
+            content: suggestion,
+          },
+        ];
+      } else {
+        newList = [
+          ...historyList,
+          {
+            role: "assistant",
+            content: suggestion,
+          },
+        ];
+      }
+      setChatListPersist(newList);
+    },
+    [historyList, setChatListPersist]
+  );
+
+  // 提供给chatService的回调
+  useEffect(() => {
+    chatService.actions = {
+      onStream: (sug) => setSuggestion(sug),
+      onFinish: () => {
+        setLoading(false);
+      },
+    };
+  }, [setSuggestion]);
+
   useEffect(() => {
     const getChatList = getChatLogs(TMP_SESSION_CHAT);
     setHistoryList(getChatList);
@@ -41,58 +91,53 @@ export const Chat: React.FC = () => {
     }
   }, [historyList]);
 
-  const setChatListPersist = (logs: ChatLogType[]) => {
-    setHistoryList(logs);
-    // 持久化
-    updateChatLogs(TMP_SESSION_CHAT, logs);
-  };
-
-  const getGptResponse = async (prompt: string) => {
-    setLoading(true);
-    // 保存历史记录上下文(user)
-    const list = [...historyList, { role: "user", content: prompt }];
-    setChatListPersist(list);
-    // 清空输入框
-    setPrompt("");
-    // 若开启联网
-    let enhancedPrompt = "";
-    if (isOnline) {
-      // 若开启联网，调用google搜索
-      const searchRes = await googleSearch(prompt);
-      enhancedPrompt = online_prompt(searchRes, prompt);
-    }
-
-    let response = null;
-    try {
-      response = await getCompletions({
-        prompt: isOnline ? enhancedPrompt : prompt,
-        history: historyList,
-        model: selectedModel,
-      });
-    } catch (error) {
-      //若出现异常回退
-      messageApi.error(error + "");
-      setLoading(false);
-      list.pop();
+  const getGptResponse = useCallback(
+    async (prompt: string) => {
+      setLoading(true);
+      // 保存历史记录上下文(user)
+      const list: ChatLogType[] = [
+        ...historyList,
+        { role: "user", content: prompt },
+      ];
       setChatListPersist(list);
-      return;
-    }
-    setLoading(false);
-    // 保存历史记录上下文(gpt)
-    setChatListPersist([
-      ...list,
-      { role: "assistant", content: response.message.content },
-    ]);
-    console.log("gptAPI返回:", response);
-  };
+      // 清空输入框
+      setPrompt("");
+      // 若开启联网
+      let enhancedPrompt = "";
+      if (isOnline) {
+        // 若开启联网，调用google搜索
+        const searchRes = await googleSearch(prompt);
+        enhancedPrompt = online_prompt(searchRes, prompt);
+      }
+
+      try {
+        chatService.getStreamCompletions({
+          prompt: isOnline ? enhancedPrompt : prompt,
+          history: historyList,
+          model: selectedModel,
+        });
+      } catch (error) {
+        //若出现异常回退
+        messageApi.error(error + "");
+        setLoading(false);
+        list.pop();
+        setChatListPersist(list);
+        return;
+      }
+    },
+    [historyList, isOnline, messageApi, selectedModel, setChatListPersist]
+  );
 
   // dall-e-3 生成图片
-  const generateImage = async (prompt: string) => {
+  const generateImage = useCallback(async (prompt: string) => {
     setLoading(true);
     // 清空输入框
     setPrompt("");
     // 保存历史记录上下文(user)
-    const list = [...historyList, { role: "user", content: prompt }];
+    const list: ChatLogType[] = [
+      ...historyList,
+      { role: "user", content: prompt },
+    ];
     setChatListPersist(list);
     let image = null;
     try {
@@ -115,7 +160,7 @@ export const Chat: React.FC = () => {
       { role: "assistant", content: image.data[0].url },
     ]);
     console.log("dall-e-3返回:", image.data[0]);
-  };
+  }, [historyList, messageApi, selectedModel, setChatListPersist]);
 
   return (
     <div className="h-screen flex flex-col items-center">
