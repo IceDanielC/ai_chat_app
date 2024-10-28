@@ -7,8 +7,11 @@ type Actions = {
 
 // 单例ChatService
 class ChatService {
-  private constructor() {}
+  private constructor() {
+    this.controller = new AbortController();
+  }
 
+  private controller: AbortController;
   public actions?: Actions
   private static instance: ChatService;
 
@@ -29,6 +32,7 @@ class ChatService {
         },
         method: "POST",
         body: JSON.stringify(params),
+        signal: this.controller.signal,
       });
 
       // 解析response的stream
@@ -50,7 +54,12 @@ class ChatService {
       console.error("Failed to fetch completions", error);
     } finally {
       this.actions?.onFinish?.(completions)
+      this.controller = new AbortController();
     }
+  }
+
+  public abortStream() {
+    this.controller.abort()
   }
 }
 

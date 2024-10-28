@@ -2,3 +2,41 @@
     width: 60%;
     margin-right: 5px;
 }
+
+.ripple-button {
+    background-color: #40c057; /* 按钮的背景色 */
+    color: white;
+    cursor: pointer;
+  }
+
+  .ripple-button::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 50%,
+      rgba(255, 255, 255, 0.7) 50%,
+      rgba(255, 255, 255, 0) 70%
+    );
+    opacity: 0;
+    animation: ripple-animation 2s infinite linear;
+  }
+
+  @keyframes ripple-animation {
+    0% {
+      left: -100%;
+      opacity: 1;
+    }
+    50% {
+      left: 0%;
+      opacity: 1;
+    }
+    100% {
+      left: 100%;
+      opacity: 1;
+    }
+  }

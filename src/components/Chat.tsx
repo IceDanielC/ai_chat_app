@@ -6,7 +6,11 @@ import {
   useRef,
   useState,
 } from "react";
-import { IconExternalLink, IconTrash } from "@tabler/icons-react";
+import {
+  IconPlayerStop,
+  IconTrash,
+  IconBrandTelegram,
+} from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
 import { message, Popconfirm } from "antd";
@@ -97,6 +101,11 @@ export const Chat: React.FC = () => {
 
   const getGptResponse = useCallback(
     async (prompt: string) => {
+      // 若正在请求中，停止请求
+      if (loading) {
+        chatService.abortStream();
+        return;
+      }
       setLoading(true);
       // 保存历史记录上下文(user)
       const list: ChatLogType[] = [
@@ -129,12 +138,24 @@ export const Chat: React.FC = () => {
         return;
       }
     },
-    [historyList, isOnline, messageApi, selectedModel, setChatListPersist]
+    [
+      historyList,
+      isOnline,
+      loading,
+      messageApi,
+      selectedModel,
+      setChatListPersist,
+    ]
   );
 
   // dall-e-3 生成图片
   const generateImage = useCallback(
     async (prompt: string) => {
+      // 若正在请求中，停止请求
+      if (loading) {
+        chatService.abortStream();
+        return;
+      }
       setLoading(true);
       // 清空输入框
       setPrompt("");
@@ -166,7 +187,7 @@ export const Chat: React.FC = () => {
       ]);
       console.log("dall-e-3返回:", image.data[0]);
     },
-    [historyList, messageApi, selectedModel, setChatListPersist]
+    [historyList, loading, messageApi, selectedModel, setChatListPersist]
   );
 
   return (
@@ -174,7 +195,7 @@ export const Chat: React.FC = () => {
       {contextHolder}
       {/* chat展示区域 */}
       <div className="my-3 text-2xl font-bold font-sans">
-       🌳 Your all-purpose plant&pest assistant
+        🌳 Your all-purpose plant&pest assistant
       </div>
       <div
         ref={chatLayoutRef}
@@ -269,9 +290,8 @@ export const Chat: React.FC = () => {
           />
           <div className="flex">
             <Button
-              className="self-end"
-              leftIcon={<IconExternalLink />}
-              loading={loading}
+              className={"self-end " + (loading ? styles["ripple-button"] : "")}
+              leftIcon={loading ? <IconPlayerStop /> : <IconBrandTelegram />}
               onClick={() => {
                 if (selectedModel === "dall-e-3") {
                   generateImage(prompt);
@@ -281,7 +301,7 @@ export const Chat: React.FC = () => {
               }}
               disabled={prompt.length === 0 && !loading}
             >
-              Send
+              {loading ? "Stop" : "Send"}
             </Button>
             <Popconfirm
               title="清除全部上下文记录"
