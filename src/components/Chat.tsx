@@ -14,7 +14,11 @@ import { message, Popconfirm } from "antd";
 import styles from "./Chat.module.scss";
 import { ChatLogType } from "@/utils/types";
 import chatService from "@/utils/getCompletions";
-import { clearChatLogs, getChatLogs, updateChatLogs } from "@/utils/chatStorage";
+import {
+  clearChatLogs,
+  getChatLogs,
+  updateChatLogs,
+} from "@/utils/chatStorage";
 import { getGeneratedImage } from "@/utils/getGeneratedImage";
 import { googleSearch, online_prompt } from "@/utils/google";
 
@@ -169,6 +173,9 @@ export const Chat: React.FC = () => {
     <div className="h-screen flex flex-col items-center">
       {contextHolder}
       {/* chat展示区域 */}
+      <div className="my-3 text-2xl font-bold font-sans">
+       🌳 Your all-purpose plant&pest assistant
+      </div>
       <div
         ref={chatLayoutRef}
         className="h-[80vh] overflow-y-auto px-6 w-[80vw] bg-gray-100"
@@ -280,7 +287,7 @@ export const Chat: React.FC = () => {
               title="清除全部上下文记录"
               description="你确定要清除全部上下文记录吗?"
               onConfirm={() => {
-                clearChatLogs(TMP_SESSION_CHAT)
+                clearChatLogs(TMP_SESSION_CHAT);
                 messageApi.success("清除成功");
                 // 刷新页面
                 window.location.reload();
