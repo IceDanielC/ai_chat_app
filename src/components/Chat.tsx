@@ -26,6 +26,7 @@ import {
 import { getGeneratedImage } from "@/utils/getGeneratedImage";
 import { googleSearch, online_prompt } from "@/utils/google";
 import { Wellcome } from "./Wellcome";
+import Markdown from "./Markdown";
 
 export const Chat: React.FC<{
   sessionId: string;
@@ -46,7 +47,7 @@ export const Chat: React.FC<{
     (logs: ChatLogType[]) => {
       setHistoryList(logs);
       // 持久化
-      if(sessionId) updateChatLogs(sessionId, logs);
+      if (sessionId) updateChatLogs(sessionId, logs);
     },
     [sessionId]
   );
@@ -245,8 +246,11 @@ export const Chat: React.FC<{
               {/* 如果以http开头，并以.png或者.jpg或者.jpeg或者.webp结尾，视为图片，展示图片 */}
               {/^https?:\/\/.*\.(png|jpg|jpeg|webp)/i.test(history.content) ? (
                 <Image src={history.content} alt="" width={500} height={0} />
-              ) : (
+              ) : // user不展示markdown
+              history.role === "user" ? (
                 <div>{history.content}</div>
+              ) : (
+                <Markdown markdownText={history.content} />
               )}
             </div>
           </div>
@@ -324,7 +328,7 @@ export const Chat: React.FC<{
                   if (alter) {
                     localStorage.setItem("sessionList", JSON.stringify(list));
                     // 让SessionManager重新渲染
-                    setSessionList(list)
+                    setSessionList(list);
                   }
                 }
               }}
