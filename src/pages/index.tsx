@@ -1,5 +1,5 @@
 import { Chat } from "@/components/Chat";
-import { SessionManager } from "@/components/SessionManager";
+import SessionManager from "@/components/SessionManager";
 import { SessionInfo } from "@/utils/types";
 import { ConfigProvider } from "antd";
 import { useEffect, useState } from "react";
@@ -12,13 +12,13 @@ export default function Home() {
     // 从url获取sessionId
     const url = new URL(window.location.href);
     const sessionId = url.searchParams.get("sessionId");
-    if (sessionId) {
+    if (sessionId) {      
       setSessionId(sessionId);
     }
   }, []);
 
   return (
-    <main>
+    <main className="min-w-[600px]">
       <ConfigProvider
         theme={{
           token: {

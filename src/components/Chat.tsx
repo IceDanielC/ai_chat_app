@@ -25,6 +25,7 @@ import {
 } from "@/utils/chatStorage";
 import { getGeneratedImage } from "@/utils/getGeneratedImage";
 import { googleSearch, online_prompt } from "@/utils/google";
+import { Wellcome } from "./Wellcome";
 
 export const Chat: React.FC<{
   sessionId: string;
@@ -45,7 +46,7 @@ export const Chat: React.FC<{
     (logs: ChatLogType[]) => {
       setHistoryList(logs);
       // 持久化
-      updateChatLogs(sessionId, logs);
+      if(sessionId) updateChatLogs(sessionId, logs);
     },
     [sessionId]
   );
@@ -208,12 +209,7 @@ export const Chat: React.FC<{
         {historyList.length === 0 && (
           // 兜底图
           <div className="flex justify-center">
-            <Image
-              src="https://filesystem.site/cdn/20241026/luuxr5crhMJwwJzIIhkKGeoPFZPuG8.webp"
-              alt=""
-              width={1500}
-              height={0}
-            />
+            <Wellcome />
           </div>
         )}
         {historyList.map((history, idx) => (

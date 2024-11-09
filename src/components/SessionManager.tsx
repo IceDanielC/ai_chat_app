@@ -1,28 +1,22 @@
 import type { SessionInfo } from "@/utils/types";
 import { Button, List, Modal } from "antd";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import styles from "./SessionManager.module.scss";
 import { IconTrash } from "@tabler/icons-react";
 
-export const SessionManager: React.FC<{
+const SessionManager: React.FC<{
   setSessionId: (sessionId: string) => void;
   sessionList: SessionInfo[];
   setSessionList: (sessionList: SessionInfo[]) => void;
 }> = ({ setSessionId, sessionList, setSessionList }) => {
-  const [activeSession, setActiveSession] = useState<string>("");
+  const router = useRouter();
+  const pathname = usePathname();
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    const sessionList = JSON.parse(localStorage.getItem("sessionList") || "[]");
-    setSessionList(sessionList);
-    // 从url的sessionId中获取activeSession
-    const url = new URL(window.location.href);
-    const sessionId = url.searchParams.get("sessionId");
-    setActiveSession(sessionId || "");
-  }, [setSessionList]);
+  const [currentSession, setCurrentSession] = useState("");
 
   // 创建新会话
-  const createSession = () => {
+  const createSession = useCallback(() => {
     const newSession = {
       sessionId: Date.now().toString(),
       sessionName: "新会话",
@@ -31,29 +25,43 @@ export const SessionManager: React.FC<{
       "sessionList",
       JSON.stringify([newSession, ...sessionList])
     );
-    const url = new URL(window.location.href);
-    url.searchParams.set("sessionId", newSession.sessionId);
-    window.history.pushState({}, "", url);
-    setActiveSession(newSession.sessionId);
+    router.push(pathname + "?sessionId=" + newSession.sessionId);
     setSessionId(newSession.sessionId);
     setSessionList([newSession, ...sessionList]);
-  };
+    setCurrentSession(newSession.sessionId);
+  }, [pathname, router, sessionList, setSessionId, setSessionList]);
+
+  // 组件挂载时，用户刷新浏览器
+  useEffect(() => {
+    const sessionList = JSON.parse(
+      localStorage.getItem("sessionList") || "[]"
+    ) as SessionInfo[];
+    // 当前sessionList为空时，自动创建新的会话
+    if (sessionList.length === 0) {
+      createSession();
+    } else {
+      setSessionList(sessionList);
+      const sessionId = new URLSearchParams(window.location.search).get(
+        "sessionId"
+      );
+      setSessionId(sessionId || "");
+      if (sessionId) setCurrentSession(sessionId);
+    }
+  }, []);
 
   // 删除当前会话
   const deleteSession = () => {
     const newSessionList = sessionList.filter(
-      (session) => session.sessionId !== activeSession
+      (session) => session.sessionId !== currentSession
     );
     localStorage.setItem("sessionList", JSON.stringify(newSessionList));
     setSessionList(newSessionList);
     setIsModalOpen(false);
     // 切换到第一个会话
     if (newSessionList.length > 0) {
-      const url = new URL(window.location.href);
-      url.searchParams.set("sessionId", newSessionList[0].sessionId);
-      window.history.pushState({}, "", url);
-      setActiveSession(newSessionList[0].sessionId);
+      router.push(pathname + "?sessionId=" + newSessionList[0].sessionId);
       setSessionId(newSessionList[0].sessionId);
+      setCurrentSession(newSessionList[0].sessionId);
     }
   };
 
@@ -75,15 +83,13 @@ export const SessionManager: React.FC<{
             className={
               styles["item-list"] +
               " " +
-              styles[activeSession === item.sessionId ? "active" : ""]
+              (currentSession === item.sessionId ? styles.active : "")
             }
             onClick={() => {
-              // 将url的sessionId设置为item.sessionId，但不要刷新页面
-              const url = new URL(window.location.href);
-              url.searchParams.set("sessionId", item.sessionId);
-              window.history.pushState({}, "", url);
-              setActiveSession(item.sessionId);
+              // 将url的sessionId设置为item.sessionId，但不刷新页面
+              router.push(pathname + "?sessionId=" + item.sessionId);
               setSessionId(item.sessionId);
+              setCurrentSession(item.sessionId);
             }}
           >
             <div className="ml-3">{item.sessionName}</div>
@@ -91,7 +97,10 @@ export const SessionManager: React.FC<{
               style={{ display: "none" }}
               size={20}
               className={"mr-2 " + styles["delete-icon"]}
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setIsModalOpen(true);
+                setCurrentSession(item.sessionId);
+              }}
             />
           </List.Item>
         )}
@@ -107,3 +116,5 @@ export const SessionManager: React.FC<{
     </div>
   );
 };
+
+export default SessionManager;
