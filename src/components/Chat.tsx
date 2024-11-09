@@ -242,7 +242,12 @@ export const Chat: React.FC = () => {
                 }) + " px-4 py-3 rounded-lg my-4 table shrink-[20]"
               }
             >
-              <div>{history.content}</div>
+              {/* 如果以http开头，并以.png或者.jpg或者.jpeg或者.webp结尾，视为图片，展示图片 */}
+              {/^https?:\/\/.*\.(png|jpg|jpeg|webp)/i.test(history.content) ? (
+                <Image src={history.content} alt="" width={500} height={0}/>
+              ) : (
+                <div>{history.content}</div>
+              )}
             </div>
           </div>
         ))}

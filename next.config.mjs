@@ -10,6 +10,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname:'filesystem.site',
+      },
+      {
+        protocol: 'https',
+        hostname:'oaidalleapiprodscus.blob.core.windows.net',
       }
     ]
   }
