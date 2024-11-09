@@ -1,0 +1,23 @@
+.manager-list {
+  border-right: 2px solid #e5e5e5;
+  height: 100vh;
+  overflow-y: scroll;
+}
+
+.active {
+    background-color: #dcfce7;
+}
+
+.item-list {
+  margin: 10px 8px;
+  border-radius: 8px;
+
+  &:hover {
+    cursor: pointer;
+    background-color: #dcfce7;
+
+    .delete-icon {
+        display: block !important;
+    }
+  }
+}

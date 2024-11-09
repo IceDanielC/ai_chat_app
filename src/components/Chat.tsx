@@ -16,7 +16,7 @@ import Image from "next/image";
 import { message, Popconfirm } from "antd";
 
 import styles from "./Chat.module.scss";
-import { ChatLogType } from "@/utils/types";
+import { ChatLogType, SessionInfo } from "@/utils/types";
 import chatService from "@/utils/getCompletions";
 import {
   clearChatLogs,
@@ -26,9 +26,10 @@ import {
 import { getGeneratedImage } from "@/utils/getGeneratedImage";
 import { googleSearch, online_prompt } from "@/utils/google";
 
-const TMP_SESSION_CHAT = "chat_01";
-
-export const Chat: React.FC = () => {
+export const Chat: React.FC<{
+  sessionId: string;
+  setSessionList: (sessionList: SessionInfo[]) => void;
+}> = ({ sessionId, setSessionList }) => {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [historyList, setHistoryList] = useState<ChatLogType[]>([]);
@@ -40,11 +41,14 @@ export const Chat: React.FC = () => {
   // 联网设置
   const [isOnline, setIsOnline] = useState(false);
 
-  const setChatListPersist = useCallback((logs: ChatLogType[]) => {
-    setHistoryList(logs);
-    // 持久化
-    updateChatLogs(TMP_SESSION_CHAT, logs);
-  }, []);
+  const setChatListPersist = useCallback(
+    (logs: ChatLogType[]) => {
+      setHistoryList(logs);
+      // 持久化
+      updateChatLogs(sessionId, logs);
+    },
+    [sessionId]
+  );
 
   const setSuggestion = useCallback(
     (suggestion: string) => {
@@ -85,9 +89,9 @@ export const Chat: React.FC = () => {
   }, [setSuggestion]);
 
   useEffect(() => {
-    const getChatList = getChatLogs(TMP_SESSION_CHAT);
+    const getChatList = getChatLogs(sessionId);
     setHistoryList(getChatList);
-  }, []);
+  }, [sessionId]);
 
   // 滚动到最底部
   useLayoutEffect(() => {
@@ -191,7 +195,7 @@ export const Chat: React.FC = () => {
   );
 
   return (
-    <div className="h-screen flex flex-col items-center">
+    <div className="h-screen flex flex-col items-center grow bg-light-green-gradient">
       {contextHolder}
       {/* chat展示区域 */}
       <div className="my-3 text-2xl font-bold font-sans">
@@ -199,7 +203,7 @@ export const Chat: React.FC = () => {
       </div>
       <div
         ref={chatLayoutRef}
-        className="h-[80vh] overflow-y-auto px-6 w-[80vw] bg-gray-100"
+        className="h-[80vh] overflow-y-auto px-6 w-[80vw] bg-gray-100 rounded-lg"
       >
         {historyList.length === 0 && (
           // 兜底图
@@ -207,7 +211,7 @@ export const Chat: React.FC = () => {
             <Image
               src="https://filesystem.site/cdn/20241026/luuxr5crhMJwwJzIIhkKGeoPFZPuG8.webp"
               alt=""
-              width={1200}
+              width={1500}
               height={0}
             />
           </div>
@@ -244,7 +248,7 @@ export const Chat: React.FC = () => {
             >
               {/* 如果以http开头，并以.png或者.jpg或者.jpeg或者.webp结尾，视为图片，展示图片 */}
               {/^https?:\/\/.*\.(png|jpg|jpeg|webp)/i.test(history.content) ? (
-                <Image src={history.content} alt="" width={500} height={0}/>
+                <Image src={history.content} alt="" width={500} height={0} />
               ) : (
                 <div>{history.content}</div>
               )}
@@ -252,7 +256,7 @@ export const Chat: React.FC = () => {
           </div>
         ))}
       </div>
-      <div className="flex w-[80vw] justify-center">
+      <div className="flex w-[80vw] justify-center mt-2">
         <Textarea
           value={prompt}
           placeholder="Enter your Content Here..."
@@ -303,6 +307,30 @@ export const Chat: React.FC = () => {
                 } else {
                   getGptResponse(prompt);
                 }
+                // 若当然会话的name是"新会话",则改为prompt.slice(6)
+                // url获取当前sessionId
+                const url = new URL(window.location.href);
+                const sessionId = url.searchParams.get("sessionId");
+                let alter = false;
+                if (sessionId) {
+                  const list = JSON.parse(
+                    localStorage.getItem("sessionList") || "[]"
+                  ) as SessionInfo[];
+                  list.forEach((session) => {
+                    if (
+                      session.sessionId === sessionId &&
+                      session.sessionName === "新会话"
+                    ) {
+                      session.sessionName = prompt.slice(0, 5) + "...";
+                      alter = true;
+                    }
+                  });
+                  if (alter) {
+                    localStorage.setItem("sessionList", JSON.stringify(list));
+                    // 让SessionManager重新渲染
+                    setSessionList(list)
+                  }
+                }
               }}
               disabled={prompt.length === 0 && !loading}
             >
@@ -312,7 +340,7 @@ export const Chat: React.FC = () => {
               title="清除全部上下文记录"
               description="你确定要清除全部上下文记录吗?"
               onConfirm={() => {
-                clearChatLogs(TMP_SESSION_CHAT);
+                clearChatLogs(sessionId);
                 messageApi.success("清除成功");
                 // 刷新页面
                 window.location.reload();

@@ -44,3 +44,8 @@ export type StreamPayload = {
     logit_bias?: Record<string, number>;
     user?: string;
 }
+
+export type SessionInfo = {
+    sessionId: string;
+    sessionName: string;
+}

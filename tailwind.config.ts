@@ -7,6 +7,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      backgroundImage: {
+        'light-green-gradient': 'linear-gradient(to right, #b2fab4, #d7f4d3)',
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",

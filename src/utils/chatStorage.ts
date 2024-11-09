@@ -29,3 +29,6 @@ export const clearChatLogs = (id: string) => {
         localStorage.setItem(CHAT_LOGS_KEY, JSON.stringify(logs));
     }
 }
+
+// session
+const userStorageSessionList = []
