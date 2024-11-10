@@ -54,24 +54,24 @@ const FileUpload: React.FC<{
   };
 
   return (
-    <Popover placement="top" content={"目前只支持png,jpg等格式的图片"}>
-      <Form labelCol={{ span: 4 }} className="mr-2">
-        <Form.Item label="" name="files">
-          <Upload
-            action="http://118.178.238.73:8081/upload/image"
-            fileList={fileList}
-            onChange={handleChange}
-            onRemove={handleRemove}
-            beforeUpload={preHandle}
-            multiple={false}
-          >
+    <Form labelCol={{ span: 4 }} className="mr-2">
+      <Form.Item label="" name="files">
+        <Upload
+          action="http://118.178.238.73:8081/upload/image"
+          fileList={fileList}
+          onChange={handleChange}
+          onRemove={handleRemove}
+          beforeUpload={preHandle}
+          multiple={false}
+        >
+          <Popover placement="top" content={"目前只支持png,jpg等格式的图片"}>
             <Button size="small" type="dashed">
               <UploadOutlined /> <span>Upload</span>
             </Button>
-          </Upload>
-        </Form.Item>
-      </Form>
-    </Popover>
+          </Popover>
+        </Upload>
+      </Form.Item>
+    </Form>
   );
 };
 
