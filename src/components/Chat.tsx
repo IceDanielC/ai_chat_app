@@ -1,6 +1,7 @@
 import { Button, Textarea, Select, Switch, ActionIcon } from "@mantine/core";
 import {
   useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -30,11 +31,10 @@ import FileUpload from "./FileUpload";
 import ChatDisplay from "./ChatDisplay";
 import { removeUserUploadCenter, userUploadCenter } from "@/store/uploadStore";
 import { MODELS } from "@/utils/constant";
+import { SessionContext } from "@/pages";
 
-export const Chat: React.FC<{
-  sessionId: string;
-  setSessionList: (sessionList: SessionInfo[]) => void;
-}> = ({ sessionId, setSessionList }) => {
+export const Chat: React.FC = () => {
+  const { sessionId, setSessionList } = useContext(SessionContext);
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [historyList, setHistoryList] = useState<ChatLogType[]>([]);
@@ -51,6 +51,13 @@ export const Chat: React.FC<{
       setHistoryList(logs);
       // 持久化
       if (sessionId) updateChatLogs(sessionId, logs);
+      else {
+        // 获取url中的sessionId
+        const sessionId = new URLSearchParams(window.location.search).get(
+          "sessionId"
+        );
+        updateChatLogs(sessionId!, logs);
+      }
     },
     [sessionId]
   );

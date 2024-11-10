@@ -2,7 +2,14 @@ import { Chat } from "@/components/Chat";
 import SessionManager from "@/components/SessionManager";
 import { SessionInfo } from "@/utils/types";
 import { ConfigProvider } from "antd";
-import { useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
+
+export const SessionContext = createContext<{
+  sessionId: string;
+  setSessionId: (sessionId: string) => void;
+  sessionList: SessionInfo[];
+  setSessionList: (sessionList: SessionInfo[]) => void;
+}>({} as any);
 
 export default function Home() {
   const [sessionId, setSessionId] = useState("");
@@ -12,7 +19,7 @@ export default function Home() {
     // 从url获取sessionId
     const url = new URL(window.location.href);
     const sessionId = url.searchParams.get("sessionId");
-    if (sessionId) {      
+    if (sessionId) {
       setSessionId(sessionId);
     }
   }, []);
@@ -27,12 +34,12 @@ export default function Home() {
         }}
       >
         <div className="flex">
-          <SessionManager
-            setSessionId={setSessionId}
-            sessionList={sessionList}
-            setSessionList={setSessionList}
-          />
-          <Chat sessionId={sessionId} setSessionList={setSessionList} />
+          <SessionContext.Provider
+            value={{ sessionId, setSessionId, sessionList, setSessionList }}
+          >
+            <SessionManager />
+            <Chat />
+          </SessionContext.Provider>
         </div>
       </ConfigProvider>
     </main>

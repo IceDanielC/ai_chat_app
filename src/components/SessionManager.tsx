@@ -1,15 +1,14 @@
 import type { SessionInfo } from "@/utils/types";
 import { Button, List, Modal } from "antd";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./SessionManager.module.scss";
 import { IconTrash } from "@tabler/icons-react";
+import { SessionContext } from "@/pages";
 
-const SessionManager: React.FC<{
-  setSessionId: (sessionId: string) => void;
-  sessionList: SessionInfo[];
-  setSessionList: (sessionList: SessionInfo[]) => void;
-}> = ({ setSessionId, sessionList, setSessionList }) => {
+const SessionManager: React.FC = () => {
+  const { setSessionId, sessionList, setSessionList } =
+    useContext(SessionContext);
   const router = useRouter();
   const pathname = usePathname();
   const [isModalOpen, setIsModalOpen] = useState(false);
