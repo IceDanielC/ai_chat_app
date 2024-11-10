@@ -13,7 +13,7 @@ import {
 } from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
-import { message, Popconfirm } from "antd";
+import { message, Popconfirm, UploadFile } from "antd";
 
 import styles from "./Chat.module.scss";
 import { ChatLogType, SessionInfo } from "@/utils/types";
@@ -26,7 +26,10 @@ import {
 import { getGeneratedImage } from "@/utils/getGeneratedImage";
 import { googleSearch, online_prompt } from "@/utils/google";
 import { Wellcome } from "./Wellcome";
-import Markdown from "./Markdown";
+import FileUpload from "./FileUpload";
+import ChatDisplay from "./ChatDisplay";
+import { removeUserUploadCenter, userUploadCenter } from "@/store/uploadStore";
+import { MODELS } from "@/utils/constant";
 
 export const Chat: React.FC<{
   sessionId: string;
@@ -105,19 +108,38 @@ export const Chat: React.FC<{
     }
   }, [historyList]);
 
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+
   const getGptResponse = useCallback(
-    async (prompt: string) => {
+    async (prompt: string, attachedFileUrl?: string) => {
       // 若正在请求中，停止请求
       if (loading) {
         chatService.abortStream();
         return;
       }
       setLoading(true);
+      // 用户是否上传了文件
+      const list: ChatLogType[] = attachedFileUrl
+        ? [
+            ...historyList,
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: prompt,
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: attachedFileUrl,
+                  },
+                },
+              ],
+            },
+          ]
+        : [...historyList, { role: "user", content: prompt }];
       // 保存历史记录上下文(user)
-      const list: ChatLogType[] = [
-        ...historyList,
-        { role: "user", content: prompt },
-      ];
       setChatListPersist(list);
       // 清空输入框
       setPrompt("");
@@ -130,11 +152,31 @@ export const Chat: React.FC<{
       }
 
       try {
-        chatService.getStreamCompletions({
-          prompt: isOnline ? enhancedPrompt : prompt,
-          history: historyList,
-          model: selectedModel,
-        });
+        if (attachedFileUrl) {
+          // 若用户上传了文件
+          chatService.getStreamCompletions({
+            prompt: [
+              {
+                type: "text",
+                text: isOnline ? enhancedPrompt : prompt,
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: attachedFileUrl,
+                },
+              },
+            ],
+            history: historyList,
+            model: selectedModel,
+          });
+        } else {
+          chatService.getStreamCompletions({
+            prompt: isOnline ? enhancedPrompt : prompt,
+            history: historyList,
+            model: selectedModel,
+          });
+        }
       } catch (error) {
         //若出现异常回退
         messageApi.error(error + "");
@@ -243,20 +285,13 @@ export const Chat: React.FC<{
                 }) + " px-4 py-3 rounded-lg my-4 table shrink-[20]"
               }
             >
-              {/* 如果以http开头，并以.png或者.jpg或者.jpeg或者.webp结尾，视为图片，展示图片 */}
-              {/^https?:\/\/.*\.(png|jpg|jpeg|webp)/i.test(history.content) ? (
-                <Image src={history.content} alt="" width={500} height={0} />
-              ) : // user不展示markdown
-              history.role === "user" ? (
-                <div>{history.content}</div>
-              ) : (
-                <Markdown markdownText={history.content} />
-              )}
+              <ChatDisplay role={history.role} content={history.content} />
             </div>
           </div>
         ))}
       </div>
       <div className="flex w-[80vw] justify-center mt-2">
+        <FileUpload fileList={fileList} setFileList={setFileList} />
         <Textarea
           value={prompt}
           placeholder="Enter your Content Here..."
@@ -289,13 +324,7 @@ export const Chat: React.FC<{
             w={"150px"}
             value={selectedModel}
             onChange={(value) => setSelectedModel(value!)}
-            data={[
-              { value: "gpt-3.5-turbo", label: "gpt-3.5-turbo" },
-              { value: "gpt-4o", label: "gpt-4o" },
-              { value: "gpt-4", label: "gpt-4" },
-              { value: "gpt-4o-mini", label: "gpt-4o-mini" },
-              { value: "dall-e-3", label: "dall-e-3" },
-            ]}
+            data={MODELS}
           />
           <div className="flex">
             <Button
@@ -303,11 +332,20 @@ export const Chat: React.FC<{
               leftIcon={loading ? <IconPlayerStop /> : <IconBrandTelegram />}
               onClick={() => {
                 if (selectedModel === "dall-e-3") {
+                  // 图片生成模型
                   generateImage(prompt);
                 } else {
-                  getGptResponse(prompt);
+                  // 通过userUploadCenter的uid判断用户是否上传图片（文件）
+                  if (userUploadCenter.uid) {
+                    getGptResponse(prompt, userUploadCenter.response?.data);
+                    // 清空center和Upload组件的List
+                    removeUserUploadCenter(userUploadCenter.uid);
+                    setFileList([]);
+                  } else {
+                    getGptResponse(prompt);
+                  }
                 }
-                // 若当然会话的name是"新会话",则改为prompt.slice(6)
+                // 若当然会话的name是"新会话",则改为prompt.slice(8)
                 // url获取当前sessionId
                 const url = new URL(window.location.href);
                 const sessionId = url.searchParams.get("sessionId");
@@ -321,7 +359,7 @@ export const Chat: React.FC<{
                       session.sessionId === sessionId &&
                       session.sessionName === "新会话"
                     ) {
-                      session.sessionName = prompt.slice(0, 5) + "...";
+                      session.sessionName = prompt.slice(0, 8) + "...";
                       alter = true;
                     }
                   });

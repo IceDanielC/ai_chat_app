@@ -1,10 +1,16 @@
+export type Content = {
+    type: "text" | "image_url";
+    text?: string;
+    image_url?: Record<string, any>;
+}
+
 export type ChatLogType = {
     role: "user" | "assistant" | "system"; 
-    content: string;
+    content: string | Content[];
 }
 
 export type CompletionProps = {
-    prompt: string;
+    prompt: string | Content[];
     history?: ChatLogType[];
     options?: {
         temperature?: number;
