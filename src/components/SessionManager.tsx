@@ -43,8 +43,12 @@ const SessionManager: React.FC = () => {
       const sessionId = new URLSearchParams(window.location.search).get(
         "sessionId"
       );
-      setSessionId(sessionId || "");
-      if (sessionId) setCurrentSession(sessionId);
+      // 如果sessionId为空，设置为第一个会话的sessionId
+      if (!sessionId) {
+        router.push(pathname + "?sessionId=" + sessionList[0].sessionId);
+      }
+      setSessionId(sessionId || sessionList[0].sessionId);
+      setCurrentSession(sessionId || sessionList[0].sessionId);
     }
   }, []);
 
