@@ -5,7 +5,7 @@ export const Wellcome: React.FC = () => {
     <>
       <div className={styles.container}>
         <h1>WELLCOME TO CYBGPT!</h1>
-        <p>Your all-purpose plant & pest QA assistant</p>
+        <p>Your all-purpose QA assistant</p>
         <a href="#" className={styles.button}>
           ASK ABOUT SOMETHING
         </a>

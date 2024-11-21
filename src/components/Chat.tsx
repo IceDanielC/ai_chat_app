@@ -250,7 +250,7 @@ export const Chat: React.FC = () => {
       {contextHolder}
       {/* chat展示区域 */}
       <div className="my-3 text-2xl font-bold font-sans">
-        🌳 Your all-purpose plant&pest QA assistant
+        🌳 Your all-purpose QA assistant
       </div>
       <div
         ref={chatLayoutRef}
