@@ -30,7 +30,7 @@ import { Wellcome } from "./Wellcome";
 import FileUpload from "./FileUpload";
 import ChatDisplay from "./ChatDisplay";
 import { removeUserUploadCenter, userUploadCenter } from "@/store/uploadStore";
-import { MODELS } from "@/utils/constant";
+import { DEFAULT_NEW_SESSION_NAME, MODELS } from "@/utils/constant";
 import { SessionContext } from "@/pages";
 
 export const Chat: React.FC = () => {
@@ -364,7 +364,7 @@ export const Chat: React.FC = () => {
                   list.forEach((session) => {
                     if (
                       session.sessionId === sessionId &&
-                      session.sessionName === "新会话"
+                      session.sessionName === DEFAULT_NEW_SESSION_NAME
                     ) {
                       session.sessionName = prompt.slice(0, 8) + "...";
                       alter = true;

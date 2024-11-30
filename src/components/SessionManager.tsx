@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import styles from "./SessionManager.module.scss";
 import { IconTrash } from "@tabler/icons-react";
 import { SessionContext } from "@/pages";
+import { DEFAULT_NEW_SESSION_NAME } from "@/utils/constant";
 
 const SessionManager: React.FC = () => {
   const { setSessionId, sessionList, setSessionList } =
@@ -18,7 +19,7 @@ const SessionManager: React.FC = () => {
   const createSession = useCallback(() => {
     const newSession = {
       sessionId: Date.now().toString(),
-      sessionName: "New Session",
+      sessionName: DEFAULT_NEW_SESSION_NAME,
     };
     localStorage.setItem(
       "sessionList",

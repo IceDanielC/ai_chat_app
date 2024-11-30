@@ -6,3 +6,5 @@ export const MODELS = [
     { value: "o1-mini", label: "o1-mini" },
     { value: "dall-e-3", label: "dall-e-3" },
   ]
+
+export const DEFAULT_NEW_SESSION_NAME = "New Session";
