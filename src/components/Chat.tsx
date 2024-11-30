@@ -314,15 +314,15 @@ export const Chat: React.FC = () => {
           <Switch
             className="my-1 ml-1"
             labelPosition="left"
-            label="开启联网"
+            label="Online"
             size="xs"
             checked={isOnline}
             onChange={(value) => {
               setIsOnline(value.target.checked);
               if (value.target.checked) {
-                messageApi.success("联网已开启");
+                messageApi.success("online is opened");
               } else {
-                messageApi.info("联网已关闭");
+                messageApi.info("online is closed");
               }
             }}
           />
@@ -382,11 +382,11 @@ export const Chat: React.FC = () => {
               {loading ? "Stop" : "Send"}
             </Button>
             <Popconfirm
-              title="清除全部上下文记录"
-              description="你确定要清除全部上下文记录吗?"
+              title="Clear context records for this session"
+              description="Are you sure you want to clear the all context record?"
               onConfirm={() => {
                 clearChatLogs(sessionId);
-                messageApi.success("清除成功");
+                messageApi.success("All context records have been cleared");
                 // 刷新页面
                 window.location.reload();
               }}

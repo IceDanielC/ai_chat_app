@@ -18,7 +18,7 @@ const SessionManager: React.FC = () => {
   const createSession = useCallback(() => {
     const newSession = {
       sessionId: Date.now().toString(),
-      sessionName: "新会话",
+      sessionName: "New Session",
     };
     localStorage.setItem(
       "sessionList",
@@ -75,7 +75,7 @@ const SessionManager: React.FC = () => {
         className="grow-[1] mt-2 relative left-[20%] w-[50%]"
         onClick={createSession}
       >
-        ➕ 创建新会话
+        ➕ New Session
       </Button>
       <List
         itemLayout="horizontal"
@@ -109,12 +109,12 @@ const SessionManager: React.FC = () => {
         )}
       ></List>
       <Modal
-        title="确认删除这 1 条对话记录吗？"
+        title="Are you sure to delete this session record?"
         open={isModalOpen}
         onOk={deleteSession}
         onCancel={() => setIsModalOpen(false)}
       >
-        <p>删除后对话记录无法恢复和找回，请谨慎操作</p>
+        <p>The session records cannot be recovered or retrieved after deletion, so please be careful!</p>
       </Modal>
     </div>
   );
