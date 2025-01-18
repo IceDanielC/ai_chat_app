@@ -1,0 +1,25 @@
+.book-container {
+  margin-right: 6px;
+  margin-top: 3px;
+}
+
+.question {
+  display: flex;
+  width: 450px;
+
+  :global {
+    .ant-btn {
+      align-self: self-end;
+      margin-left: 10px;
+    }
+  }
+}
+
+.form-container {
+  :global {
+    .ant-collapse {
+      position: relative;
+      left: 50px;
+    }
+  }
+}

@@ -15,8 +15,6 @@ import {
 import clsx from "clsx";
 import Image from "next/image";
 import { message, Popconfirm, UploadFile } from "antd";
-
-import styles from "./Chat.module.scss";
 import { ChatLogType, SessionInfo } from "@/utils/types";
 import chatService from "@/utils/getCompletions";
 import {
@@ -32,6 +30,9 @@ import ChatDisplay from "./ChatDisplay";
 import { removeUserUploadCenter, userUploadCenter } from "@/store/uploadStore";
 import { DEFAULT_NEW_SESSION_NAME, MODELS } from "@/utils/constant";
 import { SessionContext } from "@/pages";
+import { BookChating } from "./BookChating";
+
+import styles from "./Chat.module.scss";
 
 export const Chat: React.FC = () => {
   const { sessionId, setSessionList } = useContext(SessionContext);
@@ -160,7 +161,7 @@ export const Chat: React.FC = () => {
 
       try {
         if (attachedFileUrl) {
-          // 若用户上传了文件
+          // 若用户上传了图片
           chatService.getStreamCompletions({
             prompt: [
               {
@@ -298,6 +299,7 @@ export const Chat: React.FC = () => {
         ))}
       </div>
       <div className="flex w-[80vw] justify-center mt-2">
+        <BookChating />
         <FileUpload fileList={fileList} setFileList={setFileList} />
         <Textarea
           value={prompt}
