@@ -1,4 +1,5 @@
 import { WebPDFLoader } from "@langchain/community/document_loaders/web/pdf";
+import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
 import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { RetrievalQAChain } from "langchain/chains";
@@ -20,8 +21,15 @@ export async function getPDFText(pdfUrl: string) {
   return docs;
 }
 
+// 解析website
+export async function getWebsiteDocument(website: string) {
+  const loader = new CheerioWebBaseLoader(website);
+  const docs = await loader.load();
+  return docs;
+}
+
 // 上传文档到supabase
-export async function uploadPdfToSupabase(docs: any) {
+export async function uploadDocumentToSupabase(docs: any) {
   await SupabaseVectorStore.fromDocuments(docs, embeddingModel, {
     client: supabaseClient,
     tableName: "documents",

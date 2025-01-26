@@ -9,6 +9,7 @@ import {
   Modal,
   Select,
   Skeleton,
+  Switch,
   Upload,
   UploadFile,
   UploadProps,
@@ -18,8 +19,9 @@ import { UploadOutlined, SendOutlined } from "@ant-design/icons";
 import {
   deleteAllDocuments,
   getPDFText,
+  getWebsiteDocument,
   retrievalFromSupabase,
-  uploadPdfToSupabase,
+  uploadDocumentToSupabase,
 } from "@/utils/pdfRetriever";
 import { MODELS } from "@/utils/constant";
 import Markdown from "./Markdown";
@@ -28,7 +30,9 @@ import Image from "next/image";
 import styles from "./BookChating.module.scss";
 
 type FieldType = {
+  website?: boolean;
   bookInfo?: any;
+  websiteUrl?: string;
   question?: string;
   models?: string;
 };
@@ -39,6 +43,8 @@ export const BookChating = () => {
   const [loading, setLoading] = useState(false);
   const [model, setModel] = useState("gpt-4o");
   const [responseText, setResponseText] = useState("");
+  // pdf or website false -> pdf, true -> website
+  const [fieldType, setFieldType] = useState(false);
 
   // 关闭时重置内容
   useEffect(() => {
@@ -47,6 +53,7 @@ export const BookChating = () => {
       setResponseText("");
       setModel("gpt-4o");
       setLoading(false);
+      setFieldType(false);
     }
   }, [open]);
 
@@ -84,15 +91,21 @@ export const BookChating = () => {
 
   // 表单提交
   const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
-    const { bookInfo, question, models } = values;
-    const pdfUrl = bookInfo.file.response?.data;
+    const { bookInfo, question, models, websiteUrl } = values;
     setLoading(true);
     setResponseText("");
-    const docs = await getPDFText(pdfUrl ?? "");
+    // 判断是pdf还是website
+    let docs = null;
+    if (fieldType) {
+      docs = await getWebsiteDocument(websiteUrl as string);
+    } else {
+      const pdfUrl = bookInfo.file.response?.data;
+      docs = await getPDFText(pdfUrl ?? "");
+    }
     // 先删除所有文档
     await deleteAllDocuments();
     // 上传docs
-    await uploadPdfToSupabase(docs);
+    await uploadDocumentToSupabase(docs);
     // 使用llm进行retrieve
     const answer = await retrievalFromSupabase(
       question as string,
@@ -142,27 +155,55 @@ export const BookChating = () => {
           onFinishFailed={onFinishFailed}
           autoComplete="off"
         >
-          <Form.Item<FieldType>
-            label="Uploaded pdf(word)"
-            name="bookInfo"
-            rules={[{ required: true, message: "Please upload!" }]}
-          >
-            <Upload
-              action="http://118.178.238.73:8081/upload/image"
-              listType="picture"
-              multiple={false}
-              maxCount={1}
-              fileList={uploadedBook}
-              onChange={onFileChange}
-              onRemove={() => {
-                setUploadedBook([]);
-              }}
-            >
-              <Button type="primary" size="small" icon={<UploadOutlined />}>
-                Upload
-              </Button>
-            </Upload>
+          <Form.Item<FieldType> label="Is use website" name="website">
+            <div className={styles.question}>
+              <Switch
+                checked={fieldType}
+                onChange={(isChecked) => {
+                  setFieldType(isChecked);
+                }}
+              />
+            </div>
           </Form.Item>
+          {!fieldType ? (
+            <Form.Item<FieldType>
+              label="Uploaded pdf(word)"
+              name="bookInfo"
+              rules={[{ required: true, message: "Please upload!" }]}
+            >
+              <Upload
+                action="http://118.178.238.73:8081/upload/image"
+                listType="picture"
+                multiple={false}
+                maxCount={1}
+                fileList={uploadedBook}
+                onChange={onFileChange}
+                onRemove={() => {
+                  setUploadedBook([]);
+                }}
+              >
+                <Button type="primary" size="small" icon={<UploadOutlined />}>
+                  Upload
+                </Button>
+              </Upload>
+            </Form.Item>
+          ) : (
+            <Form.Item<FieldType>
+              label="Input website"
+              name="websiteUrl"
+              rules={[
+                { required: true, message: "Please enter a website!" },
+                {
+                  pattern: new RegExp(
+                    /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/
+                  ),
+                  message: "Must contain valid domain (e.g. example.com)",
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+          )}
 
           <Form.Item<FieldType>
             label="Question"
