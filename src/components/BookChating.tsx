@@ -6,6 +6,7 @@ import {
   Form,
   FormProps,
   Input,
+  message,
   Modal,
   Select,
   Skeleton,
@@ -92,27 +93,33 @@ export const BookChating = () => {
   // 表单提交
   const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
     const { bookInfo, question, models, websiteUrl } = values;
-    setLoading(true);
-    setResponseText("");
-    // 判断是pdf还是website
-    let docs = null;
-    if (fieldType) {
-      docs = await getWebsiteDocument(websiteUrl as string);
-    } else {
-      const pdfUrl = bookInfo.file.response?.data;
-      docs = await getPDFText(pdfUrl ?? "");
+    // 错误处理
+    try {
+      setLoading(true);
+      setResponseText("");
+      // 判断是pdf还是website
+      let docs = null;
+      if (fieldType) {
+        docs = await getWebsiteDocument(websiteUrl as string);
+      } else {
+        const pdfUrl = bookInfo.file.response?.data;
+        docs = await getPDFText(pdfUrl ?? "");
+      }
+      // 先删除所有文档
+      await deleteAllDocuments();
+      // 上传docs
+      await uploadDocumentToSupabase(docs);
+      // 使用llm进行retrieve
+      const answer = await retrievalFromSupabase(
+        question as string,
+        models as string
+      );
+      setResponseText(answer.text);
+      setLoading(false);
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : "发生未知错误");
+      setLoading(false);
     }
-    // 先删除所有文档
-    await deleteAllDocuments();
-    // 上传docs
-    await uploadDocumentToSupabase(docs);
-    // 使用llm进行retrieve
-    const answer = await retrievalFromSupabase(
-      question as string,
-      models as string
-    );
-    setResponseText(answer.text);
-    setLoading(false);
   };
 
   const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (
@@ -132,7 +139,7 @@ export const BookChating = () => {
         Book Chating
       </Button>
       <Modal
-        title="Book Chating"
+        title="Book&Website Chating"
         centered
         open={open}
         onCancel={() => setOpen(false)}

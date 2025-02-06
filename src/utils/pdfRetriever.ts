@@ -1,5 +1,4 @@
 import { WebPDFLoader } from "@langchain/community/document_loaders/web/pdf";
-import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
 import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { RetrievalQAChain } from "langchain/chains";
@@ -23,9 +22,28 @@ export async function getPDFText(pdfUrl: string) {
 
 // 解析website
 export async function getWebsiteDocument(website: string) {
-  const loader = new CheerioWebBaseLoader(website);
-  const docs = await loader.load();
-  return docs;
+  try {
+    // 使用Next.js API代理服务器或后端API来获取网站内容
+    const response = await fetch("/api/scrape", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url: website }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.documents;
+  } catch (error) {
+    console.error("获取网站内容时出错:", error);
+    throw new Error(
+      `无法加载网站内容: ${error instanceof Error ? error.message : "未知错误"}`
+    );
+  }
 }
 
 // 上传文档到supabase

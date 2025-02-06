@@ -15,7 +15,7 @@ import {
 import clsx from "clsx";
 import Image from "next/image";
 import { message, Popconfirm, UploadFile } from "antd";
-import { ChatLogType, SessionInfo } from "@/utils/types";
+import { ChatLogType, SessionInfo, WebsiteInfo } from "@/utils/types";
 import chatService from "@/utils/getCompletions";
 import {
   clearChatLogs,
@@ -23,7 +23,11 @@ import {
   updateChatLogs,
 } from "@/utils/chatStorage";
 import { getGeneratedImage } from "@/utils/getGeneratedImage";
-import { googleSearch, online_prompt } from "@/utils/google";
+import {
+  getUrlAndTitleList,
+  googleSearch,
+  online_prompt,
+} from "@/utils/google";
 import { Wellcome } from "./Wellcome";
 import FileUpload from "./FileUpload";
 import ChatDisplay from "./ChatDisplay";
@@ -64,7 +68,7 @@ export const Chat: React.FC = () => {
   );
 
   const setSuggestion = useCallback(
-    (suggestion: string) => {
+    (suggestion: string, websites?: WebsiteInfo[], cot?: string) => {
       const len = historyList.length;
       const lastMessage = len ? historyList[len - 1] : null;
       let newList: ChatLogType[] = [];
@@ -86,6 +90,14 @@ export const Chat: React.FC = () => {
           },
         ];
       }
+      // 将搜索结果添加到历史记录中
+      if (websites) {
+        newList[newList.length - 1].websites = websites;
+      }
+      // 将思维链添加到历史记录中
+      if (cot) {
+        newList[newList.length - 1].cot = cot;
+      }
       setChatListPersist(newList);
     },
     [historyList, setChatListPersist]
@@ -94,7 +106,13 @@ export const Chat: React.FC = () => {
   // 提供给chatService的回调
   useEffect(() => {
     chatService.actions = {
-      onStream: (sug) => setSuggestion(sug),
+      onStream: (sug, websites, cot) => {
+        if (cot) {
+          setSuggestion(sug, websites, cot);
+        } else {
+          setSuggestion(sug, websites);
+        }
+      },
       onFinish: () => {
         setLoading(false);
       },
@@ -153,20 +171,30 @@ export const Chat: React.FC = () => {
       setPrompt("");
       // 若开启联网
       let enhancedPrompt = "";
+      let websites: WebsiteInfo[] = [];
       if (isOnline) {
         // 若开启联网，调用google搜索
         const searchRes = await googleSearch(prompt);
         enhancedPrompt = online_prompt(searchRes, prompt);
+        // 获取搜索结果的url和title
+        const webList = await getUrlAndTitleList(prompt);
+        websites = webList.map((item: any) => ({
+          title: item.title,
+          url: item.link,
+          content: item.snippet,
+        }));
       }
 
       try {
         if (attachedFileUrl) {
-          // 若用户上传了图片
+          // 若用户上传了图片，关闭联网
+          setIsOnline(false);
+          messageApi.info("online is not available in this mode");
           chatService.getStreamCompletions({
             prompt: [
               {
                 type: "text",
-                text: isOnline ? enhancedPrompt : prompt,
+                text: prompt,
               },
               {
                 type: "image_url",
@@ -183,6 +211,7 @@ export const Chat: React.FC = () => {
             prompt: isOnline ? enhancedPrompt : prompt,
             history: historyList,
             model: selectedModel,
+            websites,
           });
         }
       } catch (error) {
@@ -293,7 +322,12 @@ export const Chat: React.FC = () => {
                 }) + " px-4 py-3 rounded-lg my-4 table shrink-[20]"
               }
             >
-              <ChatDisplay role={history.role} content={history.content} />
+              <ChatDisplay
+                role={history.role}
+                content={history.content}
+                websites={history.websites}
+                cot={history.cot}
+              />
             </div>
           </div>
         ))}
@@ -335,9 +369,11 @@ export const Chat: React.FC = () => {
             onChange={(value) => setSelectedModel(value!)}
             data={MODELS}
           />
-          <div className="flex">
+          <div className="flex mt-[6px]">
             <Button
-              className={"self-end " + (loading ? styles["ripple-button"] : "")}
+              className={
+                "self-end h-[30px]" + (loading ? styles["ripple-button"] : "")
+              }
               leftIcon={loading ? <IconPlayerStop /> : <IconBrandTelegram />}
               onClick={() => {
                 if (selectedModel === "dall-e-3") {

@@ -29,18 +29,27 @@ export default async function handler(req: NextRequest) {
 }
 
 const requestCompletionStream = async (payload: StreamPayload) => {
+  // TODO 目前R1不支持图片对话，若history中有图片，则会报422错误
+  const BASE_URL =
+    payload.model === "deepseek-reasoner"
+      ? "https://api.deepseek.com/v1/"
+      : "https://api.openai.com/v1/";
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch(BASE_URL + "chat/completions", {
       headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${
+          payload.model === "deepseek-reasoner"
+            ? process.env.DEEPSEEK_API_KEY
+            : process.env.OPENAI_API_KEY
+        }`,
         "Content-Type": "application/json",
       },
       method: "POST",
       body: JSON.stringify(payload),
     });
 
-    if(response.status !== 200) {
-        return response.status + ": " + response.statusText
+    if (response.status !== 200) {
+      return response.status + ": " + response.statusText;
     }
 
     return handleStream(response);
@@ -48,7 +57,7 @@ const requestCompletionStream = async (payload: StreamPayload) => {
     // 网络、token超额等问题
     console.log("err: ", error);
     return error.cause;
-  } 
+  }
 };
 
 const handleStream = (response: Response, counter: number = 0) => {
@@ -67,11 +76,18 @@ const handleStream = (response: Response, counter: number = 0) => {
           try {
             const json = JSON.parse(data);
             const text = json.choices[0]?.delta?.content || "";
-            if (counter < 2 && (text.match(/\n/) || []).length) {
-              return;
+            // 思维链
+            const cot = json.choices[0]?.delta?.reasoning_content || "";
+            // 如何有思维链，则先输出思维链，再输出内容
+            if (cot) {
+              // cot 需要以 THOUGHT: 开头
+              controller.enqueue(encoder.encode("THOUGHT:" + cot));
+            } else {
+              if (counter < 2 && (text.match(/\n/) || []).length) {
+                return;
+              }
+              controller.enqueue(encoder.encode(text));
             }
-            const queue = encoder.encode(text);
-            controller.enqueue(queue);
             counter++;
           } catch (e) {
             controller.error(e);

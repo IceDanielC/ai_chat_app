@@ -14,7 +14,7 @@ export const online_prompt = (searchRes: string, userPrompt: string) => {
 export const googleSearch = async (searchKey: string) => {
   const googleSearchKey = "AIzaSyAI_9SWpOk8vt2TnQjVSHzwMxDHrRgd3fc";
   const googleCxId = "73f004d0b3ac04d0c";
-  
+
   try {
     // 用Next.js做一层代理，避免国内的网络访问被限制
     const response = await fetch("/api/google_search", {
@@ -25,7 +25,7 @@ export const googleSearch = async (searchKey: string) => {
       body: JSON.stringify({ googleSearchKey, googleCxId, searchKey }),
     });
     const data = await response.json();
-    
+
     return data.items
       .map((item: { snippet: string }) => item.snippet)
       .join("\n"); // 返回搜索结果
@@ -33,4 +33,19 @@ export const googleSearch = async (searchKey: string) => {
     console.error("搜索错误:", error);
     return "搜索结果出现异常，请忽略";
   }
+};
+
+// 获取网站url和title
+export const getUrlAndTitleList = async (searchKey: string) => {
+  const googleSearchKey = "AIzaSyAI_9SWpOk8vt2TnQjVSHzwMxDHrRgd3fc";
+  const googleCxId = "73f004d0b3ac04d0c";
+  const response = await fetch("/api/google_search", {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+    body: JSON.stringify({ googleSearchKey, googleCxId, searchKey }),
+  });
+  const data = await response.json();
+  return data.items;
 };

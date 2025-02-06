@@ -1,9 +1,13 @@
-import { CompletionProps } from "./types";
+import { CompletionProps, WebsiteInfo } from "./types";
 
 type Actions = {
-    onStream: (completions: string) => void;
-    onFinish?: (completions: string) => void;
-}
+  onStream: (
+    completions: string,
+    websites?: WebsiteInfo[],
+    thoughtChain?: string
+  ) => void;
+  onFinish?: (completions: string) => void;
+};
 
 // 单例ChatService
 class ChatService {
@@ -12,7 +16,7 @@ class ChatService {
   }
 
   private controller: AbortController;
-  public actions?: Actions
+  public actions?: Actions;
   private static instance: ChatService;
 
   public static getInstance(): ChatService {
@@ -23,7 +27,8 @@ class ChatService {
   }
 
   public async getStreamCompletions(params: CompletionProps) {
-    let completions = ""
+    let completions = "";
+    let thoughtChain = "";
 
     try {
       const response = await fetch("/api/chat", {
@@ -37,29 +42,38 @@ class ChatService {
 
       // 解析response的stream
       const data = response.body;
-      if(!data) return null;
+      if (!data) return null;
       const reader = data.getReader();
       const decoder = new TextDecoder("utf-8");
-      let done = false
-      while(!done) {
-       const { value, done: doneReadStream } = await reader.read()
-       done = doneReadStream
-       const chunkValue = decoder.decode(value)
-       completions += chunkValue
-       this.actions?.onStream(completions)
-       await new Promise(resolve => setTimeout(resolve, 100))
-      }
+      let done = false;
 
+      while (!done) {
+        const { value, done: doneReadStream } = await reader.read();
+        done = doneReadStream;
+        const chunkValue = decoder.decode(value);
+
+        // 检查是否是思维链输出 (以 "THOUGHT:" 含有的内容)
+        if (chunkValue.includes("THOUGHT:")) {
+          // 使用正则移除所有 "THOUGHT:"
+          thoughtChain += chunkValue.replace(/THOUGHT:|\n/g, "");
+          this.actions?.onStream(completions, undefined, thoughtChain);
+        } else {
+          completions += chunkValue;
+          this.actions?.onStream(completions, params.websites, thoughtChain);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
     } catch (error) {
       console.error("Failed to fetch completions", error);
     } finally {
-      this.actions?.onFinish?.(completions)
+      this.actions?.onFinish?.(completions);
       this.controller = new AbortController();
     }
   }
 
   public abortStream() {
-    this.controller.abort()
+    this.controller.abort();
   }
 }
 

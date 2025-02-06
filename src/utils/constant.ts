@@ -1,4 +1,5 @@
 export const MODELS = [
+  { value: "deepseek-reasoner", label: "deepseek-r1" },
   { value: "gpt-3.5-turbo", label: "gpt-3.5-turbo" },
   { value: "gpt-4o", label: "gpt-4o" },
   { value: "gpt-4-turbo", label: "gpt-4" },
