@@ -2,7 +2,7 @@ import { Content, WebsiteInfo } from "@/utils/types";
 import assert from "assert";
 import Image from "next/image";
 import Markdown from "./Markdown";
-import { Collapse } from "antd";
+import { Collapse, Spin } from "antd";
 
 type DisplayProps = {
   role: "user" | "assistant" | "system";
@@ -58,6 +58,9 @@ const ChatDisplay: React.FC<DisplayProps> = ({
   } else if (role === "assistant") {
     // 如果role是assistant，content是string
     assert(typeof content === "string");
+    if (!content && !cot) {
+      return <Spin />;
+    }
     /* 如果以http开头，并以.png或者.jpg或者.jpeg或者.webp结尾，视为图片，展示图片 */
     if (/^https?:\/\/.*\.(png|jpg|jpeg|webp)/i.test(content)) {
       return <Image src={content} alt="" width={500} height={0} />;

@@ -78,7 +78,7 @@ const handleStream = (response: Response, counter: number = 0) => {
             const text = json.choices[0]?.delta?.content || "";
             // 思维链
             const cot = json.choices[0]?.delta?.reasoning_content || "";
-            // 如何有思维链，则先输出思维链，再输出内容
+            // 如果有思维链，则先输出思维链，再输出内容
             if (cot) {
               // cot 需要以 THOUGHT: 开头
               controller.enqueue(encoder.encode("THOUGHT:" + cot));

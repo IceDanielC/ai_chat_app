@@ -141,6 +141,9 @@ export const Chat: React.FC = () => {
       // 若正在请求中，停止请求
       if (loading) {
         chatService.abortStream();
+        // 回退chatList
+        historyList.pop();
+        setChatListPersist(historyList);
         return;
       }
       setLoading(true);
@@ -163,9 +166,14 @@ export const Chat: React.FC = () => {
                 },
               ],
             },
+            { role: "assistant", content: "" },
           ]
-        : [...historyList, { role: "user", content: prompt }];
-      // 保存历史记录上下文(user)
+        : [
+            ...historyList,
+            { role: "user", content: prompt },
+            { role: "assistant", content: "" },
+          ];
+      // 保存历史记录上下文(user和assistant的loading)
       setChatListPersist(list);
       // 清空输入框
       setPrompt("");
@@ -188,8 +196,10 @@ export const Chat: React.FC = () => {
       try {
         if (attachedFileUrl) {
           // 若用户上传了图片，关闭联网
-          setIsOnline(false);
-          messageApi.info("online is not available in this mode");
+          if (isOnline) {
+            setIsOnline(false);
+            messageApi.info("online is not available in this mode");
+          }
           chatService.getStreamCompletions({
             prompt: [
               {
@@ -239,15 +249,19 @@ export const Chat: React.FC = () => {
       // 若正在请求中，停止请求
       if (loading) {
         chatService.abortStream();
+        // 回退chatList
+        historyList.pop();
+        setChatListPersist(historyList);
         return;
       }
       setLoading(true);
       // 清空输入框
       setPrompt("");
-      // 保存历史记录上下文(user)
+      // 保存历史记录上下文(user和assistant的loading)
       const list: ChatLogType[] = [
         ...historyList,
         { role: "user", content: prompt },
+        { role: "assistant", content: "" },
       ];
       setChatListPersist(list);
       let image = null;
@@ -266,10 +280,8 @@ export const Chat: React.FC = () => {
       }
       setLoading(false);
       // 保存历史记录上下文(gpt)
-      setChatListPersist([
-        ...list,
-        { role: "assistant", content: image.data[0].url },
-      ]);
+      list[list.length - 1].content = image.data[0].url;
+      setChatListPersist(list);
       console.log("dall-e-3返回:", image.data[0]);
     },
     [historyList, loading, messageApi, selectedModel, setChatListPersist]
@@ -372,7 +384,7 @@ export const Chat: React.FC = () => {
           <div className="flex mt-[6px]">
             <Button
               className={
-                "self-end h-[30px]" + (loading ? styles["ripple-button"] : "")
+                "self-end h-[30px] " + (loading ? styles["ripple-button"] : "")
               }
               leftIcon={loading ? <IconPlayerStop /> : <IconBrandTelegram />}
               onClick={() => {
