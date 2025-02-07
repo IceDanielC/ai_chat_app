@@ -1,8 +1,6 @@
 import { WebPDFLoader } from "@langchain/community/document_loaders/web/pdf";
-import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
 import { createClient } from "@supabase/supabase-js";
-import { RetrievalQAChain } from "langchain/chains";
-import { embeddingModel, getAIModel } from "./model";
+import { embeddingToSupabaseApi } from "./model";
 
 const SUPABASE_URL = "https://mhdgprfqcfwsosnowows.supabase.co";
 const SUPABASE_PRIVATE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_KEY!;
@@ -48,11 +46,7 @@ export async function getWebsiteDocument(website: string) {
 
 // 上传文档到supabase
 export async function uploadDocumentToSupabase(docs: any) {
-  await SupabaseVectorStore.fromDocuments(docs, embeddingModel, {
-    client: supabaseClient,
-    tableName: "documents",
-    queryName: "match_documents",
-  });
+  await embeddingToSupabaseApi(docs);
 }
 
 // 删除supabase中documents表中的所有数据
@@ -65,20 +59,17 @@ export async function retrievalFromSupabase(
   question: string,
   modelName: string
 ) {
-  const fileStore = await SupabaseVectorStore.fromExistingIndex(
-    embeddingModel,
-    {
-      client: supabaseClient,
-      tableName: "documents",
-      queryName: "match_documents",
-    }
-  );
-  const retreiver = RetrievalQAChain.fromLLM(
-    getAIModel(modelName),
-    fileStore.asRetriever()
-  );
-  const res = await retreiver.call({
-    query: question,
+  const response = await fetch("/api/retrieve_supabase", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ question, modelName }),
   });
-  return res;
+  if (response.ok) {
+    const { data } = await response.json();
+    return data;
+  } else {
+    throw new Error("Failed to retrieve data from Supabase");
+  }
 }

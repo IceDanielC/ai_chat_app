@@ -13,3 +13,17 @@ export const getAIModel = (modelName: string) => {
     temperature: 0,
   });
 };
+
+export const embeddingToSupabaseApi = async (
+  docs: Document[]
+): Promise<OpenAIEmbeddings> => {
+  const response = await fetch("/api/embedding_to_supabase", {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+    body: JSON.stringify({ docs }),
+  });
+  const data = await response.json();
+  return data;
+};
