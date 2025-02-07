@@ -57,14 +57,15 @@ export async function deleteAllDocuments() {
 // 利用LLM查询supabase中的数据
 export async function retrievalFromSupabase(
   question: string,
-  modelName: string
+  modelName: string,
+  temperature: number
 ) {
   const response = await fetch("/api/retrieve_supabase", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ question, modelName }),
+    body: JSON.stringify({ question, modelName, temperature }),
   });
   if (response.ok) {
     const { data } = await response.json();

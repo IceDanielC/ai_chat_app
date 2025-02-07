@@ -2,7 +2,9 @@
 import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
 import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { createClient } from "@supabase/supabase-js";
-import { RetrievalQAChain } from "langchain/chains";
+import { createRetrievalChain } from "langchain/chains/retrieval";
+import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
@@ -10,7 +12,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    const { question, modelName } = req.body;
+    const { question, modelName, temperature } = req.body;
 
     const SUPABASE_URL = "https://mhdgprfqcfwsosnowows.supabase.co";
     const SUPABASE_PRIVATE_KEY = process.env.SUPABASE_PRIVATE_KEY!;
@@ -31,20 +33,44 @@ export default async function handler(
       }
     );
 
-    // 获取模型 TODO 后续可以考虑使用deepseek-r1
-    const openaiModel = new ChatOpenAI({
-      openAIApiKey: `${process.env.OPENAI_API_KEY}`,
+    // 获取模型
+    const model = new ChatOpenAI({
+      openAIApiKey:
+        modelName === "deepseek-reasoner"
+          ? process.env.DEEPSEEK_API_KEY
+          : process.env.OPENAI_API_KEY,
       modelName,
-      temperature: 0,
+      temperature,
+      configuration: {
+        baseURL:
+          modelName === "deepseek-reasoner"
+            ? "https://api.deepseek.com/v1"
+            : undefined,
+      },
     });
 
-    const retreiver = RetrievalQAChain.fromLLM(
-      openaiModel,
-      fileStore.asRetriever()
+    const prompt = ChatPromptTemplate.fromTemplate(
+      `Answer the following question based only on the provided context:
+      
+      <context>{context}</context>
+      
+      Question: {input}
+      
+      Answer: `
     );
 
-    const answer = await retreiver.call({
-      query: question,
+    const documentChain = await createStuffDocumentsChain({
+      llm: model,
+      prompt,
+    });
+
+    const retrievalChain = await createRetrievalChain({
+      combineDocsChain: documentChain,
+      retriever: fileStore.asRetriever(),
+    });
+
+    const { context, answer } = await retrievalChain.invoke({
+      input: question,
     });
 
     res.status(200).json({ data: answer });

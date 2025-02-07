@@ -10,13 +10,19 @@ import {
   Modal,
   Select,
   Skeleton,
+  Slider,
   Switch,
+  Tooltip,
   Upload,
   UploadFile,
   UploadProps,
 } from "antd";
 import { useEffect, useMemo, useState } from "react";
-import { UploadOutlined, SendOutlined } from "@ant-design/icons";
+import {
+  UploadOutlined,
+  SendOutlined,
+  QuestionCircleOutlined,
+} from "@ant-design/icons";
 import {
   deleteAllDocuments,
   getPDFText,
@@ -36,6 +42,7 @@ type FieldType = {
   websiteUrl?: string;
   question?: string;
   models?: string;
+  temperature?: number;
 };
 
 export const BookChating = () => {
@@ -64,26 +71,41 @@ export const BookChating = () => {
         key: "advanced-config",
         label: "Advanced Config",
         children: (
-          <Form.Item<FieldType>
-            label="Models"
-            name="models"
-            labelCol={{ span: 4 }}
-            style={{ marginTop: "15px" }}
-          >
-            <Select
-              showSearch
-              placeholder="Select a model"
-              filterOption={(input, option) =>
-                (option?.label ?? "")
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
+          <>
+            <Form.Item<FieldType>
+              label="Models"
+              name="models"
+              labelCol={{ span: 4 }}
+              style={{ marginTop: "15px" }}
+            >
+              <Select
+                showSearch
+                placeholder="Select a model"
+                filterOption={(input, option) =>
+                  (option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                defaultValue={"gpt-4o"}
+                value={model}
+                onChange={(m) => setModel(m)}
+                options={MODELS.filter((model) => model.value !== "dall-e-3")}
+              />
+            </Form.Item>
+            <Form.Item<FieldType>
+              label={
+                <Tooltip title="temperature越大，模型越随机，例如代码生成选择0，诗歌创作选择1">
+                  <span>Temperature </span>
+                  <QuestionCircleOutlined />
+                </Tooltip>
               }
-              defaultValue={"gpt-4o"}
-              value={model}
-              onChange={(m) => setModel(m)}
-              options={MODELS.filter((model) => model.value !== "dall-e-3")}
-            />
-          </Form.Item>
+              name="temperature"
+              labelCol={{ span: 6 }}
+              style={{ marginTop: "15px" }}
+            >
+              <Slider min={0} max={1} step={0.01} defaultValue={0} />
+            </Form.Item>
+          </>
         ),
       },
     ],
@@ -92,7 +114,13 @@ export const BookChating = () => {
 
   // 表单提交
   const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
-    const { bookInfo, question, models, websiteUrl } = values;
+    const {
+      bookInfo,
+      question,
+      models = "gpt-4o",
+      websiteUrl,
+      temperature = 0,
+    } = values;
     // 错误处理
     try {
       setLoading(true);
@@ -110,11 +138,13 @@ export const BookChating = () => {
       // 上传docs
       await uploadDocumentToSupabase(docs);
       // 使用llm进行retrieve
+      console.log("retrieve models:", models);
       const answer = await retrievalFromSupabase(
         question as string,
-        models as string
+        models as string,
+        temperature
       );
-      setResponseText(answer.text);
+      setResponseText(answer);
       setLoading(false);
     } catch (error) {
       message.error(error instanceof Error ? error.message : "发生未知错误");
