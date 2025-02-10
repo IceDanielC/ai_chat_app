@@ -53,6 +53,7 @@ export const BookChating = () => {
   const [responseText, setResponseText] = useState("");
   // pdf or website false -> pdf, true -> website
   const [fieldType, setFieldType] = useState(false);
+  const [form] = Form.useForm();
 
   // 关闭时重置内容
   useEffect(() => {
@@ -183,6 +184,7 @@ export const BookChating = () => {
         maskClosable={false}
       >
         <Form
+          form={form}
           name="basic"
           className={styles["form-container"]}
           labelCol={{ span: 8 }}
@@ -197,6 +199,9 @@ export const BookChating = () => {
               <Switch
                 checked={fieldType}
                 onChange={(isChecked) => {
+                  setResponseText("");
+                  setUploadedBook([]);
+                  form.resetFields();
                   setFieldType(isChecked);
                 }}
               />
