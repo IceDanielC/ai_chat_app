@@ -1,11 +1,11 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
 import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
-import { createClient } from "@supabase/supabase-js";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { createSupabaseClient } from "@/utils/supabase";
 
 export default async function handler(
   req: NextApiRequest,
@@ -14,10 +14,7 @@ export default async function handler(
   try {
     const { question, modelName, temperature } = req.body;
 
-    const SUPABASE_URL = "https://mhdgprfqcfwsosnowows.supabase.co";
-    const SUPABASE_PRIVATE_KEY = process.env.SUPABASE_PRIVATE_KEY!;
-
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_PRIVATE_KEY);
+    const supabaseClient = createSupabaseClient();
 
     const embeddingModel = new OpenAIEmbeddings({
       openAIApiKey: `${process.env.OPENAI_API_KEY}`,

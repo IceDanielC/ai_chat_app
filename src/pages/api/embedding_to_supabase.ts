@@ -1,7 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
 import { OpenAIEmbeddings } from "@langchain/openai";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseClient } from "@/utils/supabase";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
@@ -11,10 +11,7 @@ export default async function handler(
   try {
     const { docs } = req.body;
 
-    const SUPABASE_URL = "https://mhdgprfqcfwsosnowows.supabase.co";
-    const SUPABASE_PRIVATE_KEY = process.env.SUPABASE_PRIVATE_KEY!;
-
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_PRIVATE_KEY);
+    const supabaseClient = createSupabaseClient();
 
     const embeddingModel = new OpenAIEmbeddings({
       openAIApiKey: `${process.env.OPENAI_API_KEY}`,

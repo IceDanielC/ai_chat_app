@@ -5,6 +5,7 @@ export const MODELS = [
   { value: "gpt-4-turbo", label: "gpt-4" },
   { value: "gpt-4o-mini", label: "gpt-4o-mini" },
   { value: "o1-mini", label: "o1-mini" },
+  { value: "o1-preview", label: "o1-preview" },
   { value: "dall-e-3", label: "dall-e-3 (generate image please use this)" },
 ];
 
