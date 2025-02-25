@@ -11,10 +11,11 @@ import {
   IconPlayerStop,
   IconTrash,
   IconBrandTelegram,
+  IconMicrophone,
 } from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
-import { message, Popconfirm, UploadFile } from "antd";
+import { FloatButton, message, Popconfirm, Tooltip, UploadFile } from "antd";
 import { ChatLogType, SessionInfo, WebsiteInfo } from "@/utils/types";
 import chatService from "@/utils/getCompletions";
 import {
@@ -454,6 +455,15 @@ export const Chat: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <Tooltip title="Start voice chat">
+        <FloatButton
+          type="primary"
+          className={`absolute bottom-40 right-20 ${styles["float-voice-btn"]}`}
+          onClick={() => console.log("onClick")}
+          icon={<IconMicrophone />}
+        />
+      </Tooltip>
     </div>
   );
 };
