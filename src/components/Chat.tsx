@@ -459,7 +459,7 @@ export const Chat: React.FC = () => {
       <Tooltip title="Start voice chat">
         <FloatButton
           type="primary"
-          className={`absolute bottom-40 right-20 ${styles["float-voice-btn"]}`}
+          className={`absolute bottom-40 left-1/4 translate-x-[-40px] ${styles["float-voice-btn"]}`}
           onClick={() => console.log("onClick")}
           icon={<IconMicrophone />}
         />
