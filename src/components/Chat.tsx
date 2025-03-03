@@ -11,11 +11,10 @@ import {
   IconPlayerStop,
   IconTrash,
   IconBrandTelegram,
-  IconMicrophone,
 } from "@tabler/icons-react";
 import clsx from "clsx";
 import Image from "next/image";
-import { FloatButton, message, Popconfirm, Tooltip, UploadFile } from "antd";
+import { message, Popconfirm, UploadFile } from "antd";
 import { ChatLogType, SessionInfo, WebsiteInfo } from "@/utils/types";
 import chatService from "@/utils/getCompletions";
 import {
@@ -36,6 +35,7 @@ import { removeUserUploadCenter, userUploadCenter } from "@/store/uploadStore";
 import { DEFAULT_NEW_SESSION_NAME, MODELS } from "@/utils/constant";
 import { SessionContext } from "@/pages";
 import { BookChating } from "./BookChating";
+import Voice from "./Voice";
 
 import styles from "./Chat.module.scss";
 
@@ -51,6 +51,9 @@ export const Chat: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState("gpt-4o");
   // 联网设置
   const [isOnline, setIsOnline] = useState(false);
+
+  // 添加语音处理加载状态
+  const [voiceLoading, setVoiceLoading] = useState(false);
 
   const setChatListPersist = useCallback(
     (logs: ChatLogType[]) => {
@@ -288,6 +291,27 @@ export const Chat: React.FC = () => {
     [historyList, loading, messageApi, selectedModel, setChatListPersist]
   );
 
+  // 新增处理语音识别结果的回调函数
+  const handleVoiceRecognized = useCallback(
+    (userText: string, assistantText: string) => {
+      // 添加用户输入和助手回复到历史记录
+      const newList: ChatLogType[] = [
+        ...historyList,
+        { role: "user", content: userText },
+        { role: "assistant", content: assistantText },
+      ];
+
+      // 保存到历史记录
+      setChatListPersist(newList);
+    },
+    [historyList, setChatListPersist]
+  );
+
+  // 语音加载状态变化的处理函数
+  const handleVoiceLoadingChange = useCallback((isLoading: boolean) => {
+    setVoiceLoading(isLoading);
+  }, []);
+
   return (
     <div className="h-screen flex flex-col items-center grow bg-light-green-gradient">
       {contextHolder}
@@ -295,6 +319,17 @@ export const Chat: React.FC = () => {
       <div className="my-3 text-2xl font-bold font-sans">
         🌳 Your all-purpose QA assistant
       </div>
+
+      {/* 添加语音处理加载蒙层 */}
+      {voiceLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-500 mx-auto mb-4"></div>
+            <p className="text-lg">Handling voice input...</p>
+          </div>
+        </div>
+      )}
+
       <div
         ref={chatLayoutRef}
         className="h-[80vh] overflow-y-auto px-6 w-[80vw] bg-gray-100 rounded-lg"
@@ -456,14 +491,14 @@ export const Chat: React.FC = () => {
         </div>
       </div>
 
-      <Tooltip title="Start voice chat">
-        <FloatButton
-          type="primary"
-          className={`absolute bottom-40 left-1/4 translate-x-[-40px] ${styles["float-voice-btn"]}`}
-          onClick={() => console.log("onClick")}
-          icon={<IconMicrophone />}
-        />
-      </Tooltip>
+      <Voice
+        onVoiceRecognized={handleVoiceRecognized}
+        sessionId={sessionId || ""}
+        options={{
+          model: selectedModel,
+        }}
+        onLoadingChange={handleVoiceLoadingChange}
+      />
     </div>
   );
 };

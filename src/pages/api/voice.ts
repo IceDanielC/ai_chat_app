@@ -1,14 +1,12 @@
 import { OpenAI } from "openai";
-import { NextApiResponse } from "next";
 import { NextRequest } from "next/server";
 import { ChatOpenAI } from "@langchain/openai";
 
-export default async function handler(req: NextRequest, res: NextApiResponse) {
+export default async function handler(req: NextRequest) {
   const formdata = await req.formData();
   const file = formdata.get("file") as File;
   const history = formdata.get("history") as string;
   const options = JSON.parse(formdata.get("options") as string);
-  const modelName = formdata.get("modelName") as string;
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -23,14 +21,14 @@ export default async function handler(req: NextRequest, res: NextApiResponse) {
   // text to completion
   const model = new ChatOpenAI({
     openAIApiKey:
-      modelName === "deepseek-reasoner"
+      options?.model === "deepseek-reasoner"
         ? process.env.DEEPSEEK_API_KEY
         : process.env.OPENAI_API_KEY,
-    modelName,
+    modelName: options?.model,
     temperature: options?.temperature || 0.6,
     configuration: {
       baseURL:
-        modelName === "deepseek-reasoner"
+        options?.model === "deepseek-reasoner"
           ? "https://api.deepseek.com/v1"
           : undefined,
     },
@@ -55,11 +53,19 @@ export default async function handler(req: NextRequest, res: NextApiResponse) {
     input: llmResponse.content.toString(),
   });
 
-  res.status(200).json({
-    transcription,
-    completion: llmResponse.content,
-    speechUrl: Buffer.from(await speech.arrayBuffer()).toString("base64"),
-  });
+  return new Response(
+    JSON.stringify({
+      transcription,
+      completion: llmResponse.content,
+      speechUrl: Buffer.from(await speech.arrayBuffer()).toString("base64"),
+    }),
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 }
 
 export const config = {
