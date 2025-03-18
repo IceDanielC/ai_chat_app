@@ -315,6 +315,39 @@ export const Chat: React.FC = () => {
   return (
     <div className="h-screen flex flex-col items-center grow bg-light-green-gradient">
       {contextHolder}
+
+      {/* 添加悬浮按钮 */}
+      <div className="fixed right-[68vw] bottom-3 z-50">
+        <a
+          href="http://localhost:3001/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+        >
+          <div
+            className="group 
+              relative bg-gradient-to-r 
+              from-indigo-500 via-purple-500 to-pink-500 
+              hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600
+              text-white px-3
+              rounded-full transition-all 
+              duration-300 
+              hover:w-[200px] w-[120px] 
+              h-[50px]
+              overflow-hidden cursor-pointer 
+              shadow-lg
+              flex items-center justify-center"
+          >
+            <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 group-hover:opacity-0 font-semibold text-sm">
+              Code Generate
+            </div>
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-center font-semibold text-sm">
+              Try Biz Components Code-Gen!
+            </div>
+          </div>
+        </a>
+      </div>
+
       {/* chat展示区域 */}
       <div className="my-3 text-2xl font-bold font-sans">
         🌳 Your all-purpose QA assistant
@@ -387,7 +420,7 @@ export const Chat: React.FC = () => {
           value={prompt}
           placeholder="Enter your Content Here..."
           className={styles["chat-input"]}
-          onChange={(e) => setPrompt(e.target.value)}
+          onChange={(e: any) => setPrompt(e.target.value)}
           styles={() => ({
             input: {
               height: "90px",
@@ -401,7 +434,7 @@ export const Chat: React.FC = () => {
             label="Online"
             size="xs"
             checked={isOnline}
-            onChange={(value) => {
+            onChange={(value: any) => {
               setIsOnline(value.target.checked);
               if (value.target.checked) {
                 messageApi.success("online is opened");
@@ -414,7 +447,7 @@ export const Chat: React.FC = () => {
             size="xs"
             w={"150px"}
             value={selectedModel}
-            onChange={(value) => setSelectedModel(value!)}
+            onChange={(value: any) => setSelectedModel(value!)}
             data={MODELS}
           />
           <div className="flex mt-[6px]">
