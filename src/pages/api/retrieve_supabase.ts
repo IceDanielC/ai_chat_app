@@ -19,6 +19,9 @@ export default async function handler(
     const embeddingModel = new OpenAIEmbeddings({
       openAIApiKey: `${process.env.OPENAI_API_KEY}`,
       modelName: "text-embedding-ada-002",
+      configuration: {
+        baseURL: process.env.BASE_URL,
+      },
     });
 
     const fileStore = await SupabaseVectorStore.fromExistingIndex(
@@ -42,7 +45,7 @@ export default async function handler(
         baseURL:
           modelName === "deepseek-reasoner"
             ? "https://api.deepseek.com/v1"
-            : undefined,
+            : process.env.BASE_URL,
       },
     });
 

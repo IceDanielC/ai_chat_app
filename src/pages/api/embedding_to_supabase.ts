@@ -16,6 +16,9 @@ export default async function handler(
     const embeddingModel = new OpenAIEmbeddings({
       openAIApiKey: `${process.env.OPENAI_API_KEY}`,
       modelName: "text-embedding-ada-002",
+      configuration: {
+        baseURL: process.env.BASE_URL,
+      },
     });
 
     await SupabaseVectorStore.fromDocuments(docs, embeddingModel, {
