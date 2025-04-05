@@ -15,6 +15,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "oaidalleapiprodscus.blob.core.windows.net",
       },
+      {
+        protocol: "https",
+        hostname: "dalleproduse.blob.core.windows.net",
+      },
     ],
   },
   // Override the default webpack configuration

@@ -10,6 +10,7 @@ export default async function handler(req: NextRequest) {
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
+    baseURL: process.env.BASE_URL,
   });
 
   // speech to text
@@ -30,7 +31,7 @@ export default async function handler(req: NextRequest) {
       baseURL:
         options?.model === "deepseek-reasoner"
           ? "https://api.deepseek.com/v1"
-          : undefined,
+          : process.env.BASE_URL,
     },
   });
 

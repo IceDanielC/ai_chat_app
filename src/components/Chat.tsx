@@ -317,7 +317,7 @@ export const Chat: React.FC = () => {
       {contextHolder}
 
       {/* 添加悬浮按钮 */}
-      <div className="fixed right-[68vw] bottom-3 z-50">
+      <div className="fixed right-[65vw] bottom-3 z-50">
         <a
           href="http://localhost:3001/"
           target="_blank"

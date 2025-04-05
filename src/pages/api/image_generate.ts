@@ -16,7 +16,7 @@ export default async function handler(
 
   try {
     const response = await fetch(
-      "https://api.openai.com/v1/images/generations",
+      `${process.env.BASE_URL}images/generations`,
       {
         headers: {
           Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,

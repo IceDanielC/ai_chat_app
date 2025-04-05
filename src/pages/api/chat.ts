@@ -33,7 +33,7 @@ const requestCompletionStream = async (payload: StreamPayload) => {
   const BASE_URL =
     payload.model === "deepseek-reasoner"
       ? "https://api.deepseek.com/v1/"
-      : "https://api.openai.com/v1/";
+      : process.env.BASE_URL;
   try {
     const response = await fetch(BASE_URL + "chat/completions", {
       headers: {
